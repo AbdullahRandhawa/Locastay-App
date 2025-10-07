@@ -1,0 +1,64 @@
+<% layout("/layouts/boilerplate") %>
+
+    <body>
+        <div class="row">
+            <div class="col-10 col-lg-8 col-md-10 offset-1 offset-lg-2 offset-md-1 ">
+                <br>
+                <h3>Edit Your Profile</h3>
+                <br>
+                <form method="POST" action="/profile?_method=PUT" class="needs-validation" novalidate
+                    enctype="multipart/form-data">
+
+
+                    <div class="mb-3">
+                        <label for="fullName" class="form-label">Full Name</label>
+                        <input type="text" name="profile[fullName]" value="<%= profile.fullName %>"
+                            class="form-control">
+                    </div>
+                    <br>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" name="profile[email]" value="<%= profile.email %>" class="form-control">
+                    </div>
+                    <br>
+
+
+                    <div class="mb-3">
+                        <p>Current Profile Image:</p>
+                        <img src="<%= profile.profileImg.url %>" class="img-fluid rounded-circle"
+                            style="width: 150px; height: 150px; object-fit: cover;">
+                    </div>
+
+                    <br>
+                    <div class="mb-3">
+                        <label for="profileImg" class="form-label">Update Profile Image</label>
+                        <input type="file" name="profile[profileImg]" class="form-control">
+                    </div>
+                    <br>
+
+                    <div class="mb-3">
+                        <label for="country" class="form-label">Country</label>
+                        <input type="text" name="profile[country]" value="<%= profile.country %>" class="form-control">
+                    </div>
+                    <br>
+
+                    <div class="mb-3">
+                        <label for="bio" class="form-label">Biography</label>
+                        <textarea name="profile[bio]" class="form-control"><%= profile.bio %></textarea>
+                    </div>
+                    <br>
+
+                    <div class="mb-3">
+                        <label for="phoneNumber" class="form-label">Phone Number</label>
+                        <input type="tel" name="profile[phoneNumber]" value="<%= profile.phoneNumber %>"
+                            class="form-control">
+                    </div>
+                    <br>
+
+                    <button class="btn btn-dark custom-btn">Save Profile</button>
+                    <br><br><br>
+                </form>
+            </div>
+        </div>
+    </body>

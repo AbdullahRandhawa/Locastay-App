@@ -1,0 +1,34 @@
+<% layout("/layouts/boilerplate") %>
+
+    <body class="container-fluid">
+        <br>
+        <p> All searches for : <b>
+                <%=q%>
+            </b>
+        </p>
+        <br>
+        <br>
+        <% if(allListings.length===0){ %>
+            <h1>No listings found matching your Search!</h1>
+            <%} %>
+
+                <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 ">
+                    <% for(let listing of allListings){ %>
+                        <a href="/listings/<%= listing._id %>" class="listing-link">
+                            <div class="card listing-card card-clicked">
+                                <img src="<%= listing.image[0].url %>" class="card-img-top" style="height: 20rem;"
+                                    alt="listing-image">
+                                <div class="card-body">
+                                    <p class="card-text"><b>
+                                            <%= listing.title %>
+                                        </b><br>
+                                        &#8360; <%= listing.price.toLocaleString('en-PK') %>/ night</p>
+                                </div>
+                            </div>
+
+                        </a>
+                        <%} %>
+
+                </div>
+
+    </body>

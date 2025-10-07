@@ -1,0 +1,204 @@
+body {
+    display: flex;
+    flex-direction: column;
+    min-width: 100vh;
+}
+
+.sticky-card-container {
+    position: sticky;
+    top: 56px;
+
+    background-color: gray;
+    min-height: 3rem;
+    z-index: 2;
+}
+
+
+
+
+
+.navbar {
+
+    background-color: white;
+}
+
+.search-bar {
+    min-width: 10rem;
+    max-width: 30rem;
+}
+
+.search-btn {
+    background-color: #fe424d;
+    color: aliceblue;
+    border-radius: 25px;
+    padding: 0.1rem 1rem 0.1rem 1rem;
+
+}
+
+.search-btn:hover {
+    background-color: #fe424d;
+    color: aliceblue;
+}
+
+.search-btn i {
+    display: inline;
+    margin-right: 0.5rem;
+}
+
+.search-input {
+    border-radius: 25px;
+    padding: 0.2rem 3rem 0.2rem 3rem;
+    font-size: 1rem;
+}
+
+
+
+.fa-house {
+    color: #fe424d;
+    font-size: 1.7rem;
+}
+
+.nav-link {
+    color: #222222;
+    font-size: 1.1rem;
+}
+
+
+
+.nav-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 5px;
+}
+
+/* Underline when clicked */
+.nav-link a:active {
+    text-decoration: underline;
+    text-underline-offset: 5px;
+}
+
+
+
+.f-info-links a {
+    text-decoration: none;
+    color: #222222;
+}
+
+
+
+.f-info-links a:hover {
+    text-decoration: underline;
+}
+
+
+
+.fa-brands {
+    font-size: 1.3rem;
+}
+
+.f-info {
+
+    bottom: 0;
+    height: 8rem;
+    display: flex;
+    background-color: white;
+    border-top: 1px solid #222222;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    /* Corrected: Centers items vertically */
+    text-align: center;
+}
+
+.f-info-links,
+.f-info-socials,
+.f-info-brand {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+
+/* 
+cards */
+
+
+.listing-card {
+    margin-bottom: 2rem !important;
+    border: none;
+    opacity: 1;
+}
+
+.card-img-top {
+    border-radius: 1rem !important;
+    width: 100%;
+    object-fit: cover !important;
+}
+
+.card-body {
+    padding: 0 !important;
+}
+
+
+.listing-link {
+    text-decoration: none;
+}
+
+
+.card-clicked :hover {
+    opacity: 0.3;
+    background-color: white;
+}
+
+.custom-btn {
+    background-color: #fe424d;
+    border: none;
+    padding: 5px 30px;
+    color: black;
+}
+
+.custom-btn :hover {
+    color: white;
+    background-color: #222222;
+}
+
+
+
+/* show page */
+
+.show-img {
+    height: 60vh;
+    object-fit: fill;
+}
+
+
+
+
+.profile-img {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    border: 3px solid #dee2e6;
+    /* Optional border for a clean look */
+}
+
+.profile-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.listing-img {
+    height: 250px;
+    object-fit: cover;
+}
+
+
+
+
+
+#map {
+    width: 100%;
+    height: 60vh;
+}

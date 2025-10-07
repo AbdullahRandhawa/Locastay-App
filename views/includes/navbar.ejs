@@ -1,0 +1,39 @@
+<nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom sticky-top">
+  <div class="container-fluid">
+
+    <a class="navbar-brand ms-4" href="/listings"><i class="fa-solid fa-house"></i></a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <div class="navbar-nav">
+        <a class="nav-link mx-3" href="/listings">Explore</a>
+        <a class=" nav-link ms-3" href="/listings/new">Add New Listing
+        </a>
+      </div>
+
+
+      <div class="navbar-nav ms-auto">
+        <form class="d-flex search-bar" role="search" method="GET" action="/listings/search">
+          <input class="form-control me-2 search-input " type="search" placeholder="Search Destination" name="q" />
+          <button class="btn search-btn" type="submit"><i class="fa-solid fa-magnifying-glass"></i>Search</button>
+        </form>
+      </div>
+
+
+      <div class="navbar-nav ms-auto">
+        <% if(!currUser) { %>
+          <a class="nav-link mx-3 " href="/signup"><b>Sign up</b></a>
+          <a class="nav-link mx-3" href="/login"><b>Log in</b></a>
+          <% } %>
+            <% if(currUser) { %>
+              <a class="nav-link mx-3" href="/logout">Log out</a>
+              <a class="nav-link mx-3" href="/profile"><b>Profile</b></a>
+              <% } %>
+      </div>
+    </div>
+
+  </div>
+  </div>
+</nav>

@@ -3,7 +3,7 @@ const router = express.Router();
 const asyncWrap = require('../utils/asyncWrap');
 const passport = require('passport')
 const userController = require('../controllers/users');
-const { isLoggedIn, isOwner } = require('../middleware');
+const { isLoggedIn, isOwner } = require('../utils/middleware');
 
 
 

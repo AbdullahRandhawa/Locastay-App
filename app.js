@@ -9,7 +9,7 @@ const methodOverride = require('method-override');
 const ejsMate = require("ejs-mate");
 const Listing = require('./models/listing.js');
 const ExpressError = require('./utils/ExpressError');
-const { isLoggedIn, isOwner, validateListing, validateReview } = require('./middleware.js');
+const { isLoggedIn, isOwner, validateListing, validateReview } = require('./utils/middleware.js');
 
 const cookieParser = require('cookie-parser');
 const session = require('express-session');

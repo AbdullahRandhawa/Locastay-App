@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const asyncWrap = require('../utils/asyncWrap');
 const profileController = require('../controllers/profiles');
-const { isLoggedIn } = require('../middleware');
+const { isLoggedIn } = require('../utils/middleware');
 
 const multer = require('multer');
 const { storage } = require('../cloudConfig.js');

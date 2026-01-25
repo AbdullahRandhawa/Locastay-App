@@ -2,6 +2,8 @@ body {
     display: flex;
     flex-direction: column;
     min-width: 100vh;
+    overflow-x: hidden;
+
 }
 
 .sticky-card-container {
@@ -18,9 +20,11 @@ body {
 
 
 .navbar {
+    margin: 0px -14px;
 
-    background-color: white;
+    background-color: rgb(224, 222, 222) !important;
 }
+
 
 .search-bar {
     min-width: 10rem;
@@ -100,7 +104,8 @@ body {
     bottom: 0;
     height: 8rem;
     display: flex;
-    background-color: white;
+    background-color: rgb(179, 176, 176) !important;
+    margin: 0px -14px;
     border-top: 1px solid #222222;
     flex-wrap: wrap;
     justify-content: center;
@@ -169,7 +174,8 @@ cards */
 
 .show-img {
     height: 60vh;
-    object-fit: fill;
+    object-fit: contain;
+    background-color: #ffffff;
 }
 
 
@@ -178,15 +184,16 @@ cards */
 .profile-img {
     width: 150px;
     height: 150px;
-    object-fit: contain;
+    object-fit: cover;
     border: 3px solid #dee2e6;
-    /* Optional border for a clean look */
+
 }
 
 .profile-details-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1rem;
+
 }
 
 .listing-img {

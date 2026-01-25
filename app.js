@@ -19,6 +19,7 @@ const flash = require('connect-flash');
 const Profile = require('./models/profile');
 
 
+
 const listingRoute = require('./routes/listing.js');
 const reviewRoute = require('./routes/review.js');
 const userRoute = require('./routes/user.js');
@@ -101,8 +102,6 @@ passport.deserializeUser(User.deserializeUser());
 
 
 
-
-
 app.use((req, res, next) => {
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
@@ -122,11 +121,8 @@ app.use('/profile', profileRoute);
 
 //Root----------------------
 app.get('/', (req, res) => {
-    res.render('users/editProfile.ejs');
-
+    res.redirect('/listings');
 });
-
-
 
 const multer = require('multer');
 const { storage, cloudinary } = require('./cloudConfig.js');

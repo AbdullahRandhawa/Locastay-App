@@ -2,63 +2,227 @@
 
     <body>
         <div class="row">
-            <div class="col-10 col-lg-8 col-md-10  offset-1 offset-lg-2 offset-md-1 ">
-                <br>
-                <h3>Edit yourListing</h3>
-                <br>
-                <form method="POST" action="/listings/<%=listing._id %>?_method=PUT" class="needs-validation" novalidate
-                    enctype="multipart/form-data">
+            <div class="col-10 col-lg-8 col-md-10 offset-1 offset-lg-2 offset-md-1">
+                <div class="mb-4">
+                    <h3 class="fw-semibold">Edit Listing</h3>
+                </div>
 
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Title</label>
-                        <input type="text" name="listing[title]" value="<%= listing.title %>" class="form-control"
-                            required>
+                <form method="POST" action="/listings/<%= listing._id %>?_method=PUT" class="needs-validation"
+                    novalidate enctype="multipart/form-data">
+
+                    <!-- Main Category & Listing Type (LOCKED - read only display) -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label class="form-label fw-semibold">Category</label>
+                            <input type="text" value="<%= listing.mainCategory %>" class="form-control" disabled>
+                            <input type="hidden" name="listing[mainCategory]" value="<%= listing.mainCategory %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Listing Type</label>
+                            <input type="text" value="For <%= listing.listingType %>" class="form-control" disabled>
+                            <input type="hidden" name="listing[listingType]" value="<%= listing.listingType %>">
+                        </div>
                     </div>
-                    <br>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Descritption</label>
-                        <textarea name="listing[description]" class="form-control"
+
+                    <!-- Sub Category -->
+                    <div class="mb-4">
+                        <label for="subCategory" class="form-label fw-semibold">Sub Category</label>
+                        <select name="listing[subCategory]" id="subCategory" class="form-select" required>
+                            <% if (listing.mainCategory && CATEGORIES[listing.mainCategory]) { %>
+                                <% CATEGORIES[listing.mainCategory].forEach(sub=> { %>
+                                    <option value="<%= sub %>" <%=listing.subCategory===sub ? 'selected' : '' %>><%= sub
+                                            %>
+                                    </option>
+                                    <% }) %>
+                                        <% } %>
+                        </select>
+                    </div>
+
+                    <!-- Title -->
+                    <div class="mb-4">
+                        <label for="title" class="form-label fw-semibold">Title</label>
+                        <input type="text" name="listing[title]" value="<%= listing.title %>" class="form-control"
+                            maxlength="100" required>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label for="description" class="form-label fw-semibold">Description</label>
+                        <textarea name="listing[description]" class="form-control" rows="4"
                             required><%= listing.description %></textarea>
                     </div>
-                    <br>
-                    <div class="mb-3">
-                        Original Imgs <br>
-                        <% duplicates.forEach(duplicate=> {%>
-                            <img src="<%= duplicate %>">
-                            <% }) %>
+
+                    <!-- Current Images -->
+                    <div class="mb-4 p-3 border rounded" style="background-color: var(--bg-secondary);">
+                        <p class="mb-2 fw-semibold">Current Images</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <% duplicates.forEach(duplicate=> { %>
+                                <img src="<%= duplicate %>" class="rounded object-fit-cover shadow-sm"
+                                    style="height: 100px; width: 100px;">
+                                <% }) %>
+                        </div>
                     </div>
-                    <br>
-                    <div class="mb-3">
-                        <label for="image" class="form-label">Upload New Image</label>
+
+                    <!-- Upload New Images -->
+                    <div class="mb-4">
+                        <label for="image" class="form-label fw-semibold">Upload New Images</label>
                         <input type="file" name="listing[image]" class="form-control" id="image" multiple>
                     </div>
-                    <br>
-                    <div class="mb-3">
-                        <label for="location" class="form-label">Location</label>
-                        <input type="text" name="listing[location]" value="<%= listing.location %>" class="form-control"
+
+                    <br />
+
+                    <!-- Address -->
+                    <div class="mb-4">
+                        <label for="address" class="form-label fw-semibold">Address</label>
+                        <input type="text" name="listing[address]" value="<%= listing.address %>" class="form-control"
                             required>
                     </div>
 
-                    <br>
-                    <div class="row">
-                        <div class="mb-3 col-md-4">
-                            <label for="price" class="form-label">Price</label>
-                            <input type="number" name="listing[price]" value="<%= listing.price %>" class="form-control"
-                                required>
+                    <!-- City -->
+                    <div class="mb-4">
+                        <label for="city" class="form-label fw-semibold">City</label>
+                        <input type="text" name="listing[city]" value="<%= listing.city %>" class="form-control"
+                            required>
+                    </div>
+
+                    <div class="row mb-4">
+                        <!-- Price -->
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <label for="price" class="form-label fw-semibold">Price</label>
+                            <div class="input-group">
+                                <span class="input-group-text">&#8360;</span>
+                                <input type="number" name="listing[price]" value="<%= listing.price %>"
+                                    class="form-control" min="0" required>
+                                <span class="input-group-text" id="priceSuffix"></span>
+                            </div>
                         </div>
-                        <div class="mb-3 col-md-8">
-                            <label for="country" class="form-label">Country</label>
+
+                        <!-- Country -->
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <label for="country" class="form-label fw-semibold">Country</label>
                             <input type="text" name="listing[country]" value="<%= listing.country %>"
                                 class="form-control" required>
                         </div>
-                        <br>
-                    </div>
-                    <br>
-                    <button class="btn btn-dark custom-btn">Edit</button>
-                    <br><br><br>
-                </form>
 
+                        <!-- Condition Grade -->
+                        <div class="col-md-4">
+                            <label for="conditionGrade" class="form-label fw-semibold">Condition: <span
+                                    id="conditionValue">
+                                    <%= listing.conditionGrade || 5 %>
+                                </span>/10</label>
+                            <input type="range" name="listing[conditionGrade]" class="form-range mt-2"
+                                id="conditionGrade" min="1" max="10" value="<%= listing.conditionGrade || 5 %>">
+                        </div>
+                    </div>
+
+                    <!-- Rental Period (only if Rent) -->
+                    <% if (listing.listingType==='Rent' ) { %>
+                        <div class="mb-4" id="rentalPeriodGroup">
+                            <label for="rentalPeriod" class="form-label fw-semibold">Rental Period</label>
+                            <select name="listing[rentalPeriod]" id="rentalPeriod" class="form-select">
+                                <option value="N/A" <%=listing.rentalPeriod==='N/A' ? 'selected' : '' %>>Not Applicable
+                                </option>
+                                <option value="hour" <%=listing.rentalPeriod==='hour' ? 'selected' : '' %>>Per Hour
+                                </option>
+                                <option value="day" <%=listing.rentalPeriod==='day' ? 'selected' : '' %>>Per Day
+                                </option>
+                                <option value="week" <%=listing.rentalPeriod==='week' ? 'selected' : '' %>>Per Week
+                                </option>
+                                <option value="month" <%=listing.rentalPeriod==='month' ? 'selected' : '' %>>Per Month
+                                </option>
+                            </select>
+                        </div>
+                        <% } else { %>
+                            <input type="hidden" name="listing[rentalPeriod]" value="N/A">
+                            <% } %>
+
+                                <!-- ============ CATEGORY-SPECIFIC SPECS ============ -->
+
+                                <% if (listing.mainCategory==='Vehicle' ) { %>
+                                    <label class="form-label fw-semibold">Vehicle Details</label>
+                                    <div class="row mb-4">
+                                        <div class="col-md-4 mb-3 mb-md-0">
+                                            <input type="text" name="listing[specifications][make]"
+                                                value="<%= listing.specifications ? listing.specifications.make || '' : '' %>"
+                                                placeholder="Make" class="form-control">
+                                        </div>
+                                        <div class="col-md-4 mb-3 mb-md-0">
+                                            <input type="text" name="listing[specifications][model]"
+                                                value="<%= listing.specifications ? listing.specifications.model || '' : '' %>"
+                                                placeholder="Model" class="form-control">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="number" name="listing[specifications][year]"
+                                                value="<%= listing.specifications ? listing.specifications.year || '' : '' %>"
+                                                placeholder="Year" class="form-control" min="1900" max="2026">
+                                        </div>
+                                    </div>
+                                    <% } else if (listing.mainCategory==='Property' ) { %>
+                                        <label class="form-label fw-semibold">Property Details</label>
+                                        <div class="row mb-4">
+                                            <div class="col-md-4 mb-3 mb-md-0">
+                                                <input type="text" name="listing[specifications][area]"
+                                                    value="<%= listing.specifications ? listing.specifications.area || '' : '' %>"
+                                                    placeholder="Area" class="form-control">
+                                            </div>
+                                            <div class="col-md-4 mb-3 mb-md-0">
+                                                <input type="number" name="listing[specifications][bedrooms]"
+                                                    value="<%= listing.specifications ? listing.specifications.bedrooms || '' : '' %>"
+                                                    placeholder="Bedrooms" class="form-control" min="0">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <input type="number" name="listing[specifications][bathrooms]"
+                                                    value="<%= listing.specifications ? listing.specifications.bathrooms || '' : '' %>"
+                                                    placeholder="Bathrooms" class="form-control" min="0">
+                                            </div>
+                                        </div>
+                                        <% } else if (listing.mainCategory==='Item' ) { %>
+                                            <label class="form-label fw-semibold">Item Details</label>
+                                            <div class="row mb-4">
+                                                <div class="col-md-6 mb-3 mb-md-0">
+                                                    <input type="text" name="listing[specifications][brand]"
+                                                        value="<%= listing.specifications ? listing.specifications.brand || '' : '' %>"
+                                                        placeholder="Brand" class="form-control">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <input type="text" name="listing[specifications][model]"
+                                                        value="<%= listing.specifications ? listing.specifications.model || '' : '' %>"
+                                                        placeholder="Model" class="form-control">
+                                                </div>
+                                            </div>
+                                            <% } else if (listing.mainCategory==='Service' ) { %>
+                                                <label class="form-label fw-semibold">Service Details</label>
+                                                <div class="mb-4">
+                                                    <input type="text" name="listing[specifications][experience]"
+                                                        value="<%= listing.specifications ? listing.specifications.experience || '' : '' %>"
+                                                        placeholder="Experience" class="form-control">
+                                                </div>
+                                                <% } %>
+
+                                                    <button class="btn btn-primary-custom w-100 fs-5 mb-5">Save
+                                                        Changes</button>
+                </form>
             </div>
         </div>
-
     </body>
+
+    <script>
+        // Condition slider
+        const condSlider = document.getElementById('conditionGrade');
+        const condValue = document.getElementById('conditionValue');
+        condSlider.addEventListener('input', () => {
+            condValue.textContent = condSlider.value;
+        });
+
+        // Price suffix for rental
+        const priceSuffix = document.getElementById('priceSuffix');
+        const rentalSelect = document.getElementById('rentalPeriod');
+        if (rentalSelect) {
+            function updatePriceSuffix() {
+                const period = rentalSelect.value;
+                priceSuffix.textContent = (period && period !== 'N/A') ? ('/ ' + period) : '';
+            }
+            rentalSelect.addEventListener('change', updatePriceSuffix);
+            updatePriceSuffix();
+        }
+    </script>

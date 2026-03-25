@@ -16,13 +16,18 @@
                     <% for(let listing of allListings){ %>
                         <a href="/listings/<%= listing._id %>" class="listing-link">
                             <div class="card listing-card card-clicked">
-                                <img src="<%= listing.image[0].url %>" class="card-img-top" style="height: 20rem;"
-                                    alt="listing-image">
+                                <img src="<%= listing.image && listing.image.length > 0 ? listing.image[0].url : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800' %>"
+                                    class="card-img-top" style="height: 20rem;" alt="listing-image">
                                 <div class="card-body">
                                     <p class="card-text"><b>
                                             <%= listing.title %>
                                         </b><br>
-                                        &#8360; <%= listing.price.toLocaleString('en-PK') %>/ night</p>
+                                        &#8360; <%= listing.price.toLocaleString('en-PK') %>
+                                            <% if(listing.listingType==='Rent' && listing.rentalPeriod &&
+                                                listing.rentalPeriod !=='N/A' ) { %>
+                                                / <%= listing.rentalPeriod %>
+                                                    <% } %>
+                                    </p>
                                 </div>
                             </div>
 

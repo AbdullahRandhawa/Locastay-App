@@ -1,16 +1,23 @@
 <footer>
-  <div class="f-info">
-    <div class="f-info-socials">
-      <i class="fa-brands fa-square-facebook"></i>
-      <i class="fa-brands fa-square-instagram"></i>
-      <i class="fa-brands fa-square-linkedin"></i>
-    </div>
+  <div class="container">
+    <div class="f-info">
+      <div class="f-info-socials">
+        <a href="#"><i class="fa-brands fa-facebook"></i></a>
+        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+        <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+      </div>
 
-    <div class="f-info-brand">&copy; Locastay Private Limated</div>
+      <div class="f-info-links">
+        <a href="/privacy">Privacy</a>
+        <span class="text-muted d-none d-md-inline">&middot;</span>
+        <a href="/terms">Terms</a>
+        <span class="text-muted d-none d-md-inline">&middot;</span>
+        <a href="#">Sitemap</a>
+      </div>
 
-    <div class="f-info-links">
-      <a href="/privacy">privacy</a>
-      <a href="/terms">terms</a>
+      <div class="f-info-brand mt-2 text-muted small">
+        &copy; <%= new Date().getFullYear() %> Rentlyst, Inc.
+      </div>
     </div>
   </div>
 </footer>

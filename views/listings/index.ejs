@@ -1,29 +1,42 @@
 <% layout("/layouts/boilerplate") %>
 
-    <body class="container-fluid">
-        <br>
+    <!-- Add a subtler welcome or filter section if needed here. For now, just spacing. -->
+    <div class="mb-4"></div>
 
-        <br>
-
-        <div class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-1 ">
-            <% for(let listing of allListings){ %>
+    <div class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-1 g-4">
+        <% for(let listing of allListings){ %>
+            <div class="col">
                 <a href="/listings/<%= listing._id %>" class="listing-link">
-                    <div class="card listing-card card-clicked">
-                        <img src="<%= listing.image[0].url %> " class="card-img-top" style="height: 15rem;"
-                            alt="listing-image">
+                    <div class="card listing-card">
+                        <div class="listing-img-container">
+                            <img src="<%= listing.image && listing.image.length > 0 ? listing.image[0].url : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800' %>"
+                                class="card-img-top" alt="<%= listing.title %>">
+                            <% if(listing.listingType) { %>
+                                <span
+                                    class="position-absolute top-0 end-0 m-2 badge bg-<%= listing.listingType === 'Rent' ? 'warning text-dark' : 'success' %>"
+                                    style="font-size: 0.7rem;">
+                                    <%= listing.listingType %>
+                                </span>
+                                <% } %>
+                        </div>
                         <div class="card-body">
-                            <p class="card-text"><b>
+                            <p class="card-text">
+                                <b>
                                     <%= listing.title %>
-                                </b><br>
-                                <%= listing.country %> <br>
-                                    &#8360; <%= listing.price.toLocaleString('en-PK') %>/ night
+                                </b>
+                                <span>
+                                    <%= listing.city %>, <%= listing.country %>
+                                </span>
+                                <span class="price d-block mt-1">&#8360; <%= listing.price.toLocaleString('en-PK') %>
+                                        <% if(listing.listingType==='Rent' && listing.rentalPeriod &&
+                                            listing.rentalPeriod !=='N/A' ) { %>
+                                            <span class="fw-normal text-muted">/ <%= listing.rentalPeriod %></span>
+                                            <% } %>
+                                </span>
                             </p>
                         </div>
                     </div>
-                    <img src="" alt="">
                 </a>
-                <%} %>
-
-        </div>
-
-    </body>
+            </div>
+            <% } %>
+    </div>

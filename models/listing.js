@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 const Review = require('./review');
 const Schema = mongoose.Schema;
 const { cloudinary } = require('../cloudConfig');
+const CATEGORIES = require('../utils/categories');
+
+const allSubCats = Object.values(CATEGORIES).flat();
 
 const listingSchema = new Schema({
     title: {
@@ -10,6 +13,7 @@ const listingSchema = new Schema({
     },
     description: {
         type: String,
+        required: true,
     },
     image: [
         {
@@ -20,22 +24,88 @@ const listingSchema = new Schema({
             },
         },
     ],
-    price: Number,
-    location: String,
-    country: String,
+    price: {
+        type: Number,
+        required: true,
+    },
+
+    city: {
+        type: String,
+        required: true,
+    },
+    country: {
+        type: String,
+        required: true,
+    },
+    address: {
+        type: String,
+        required: true,
+    },
+
+
+    mainCategory: {
+        type: String,
+        required: true,
+        enum: Object.keys(CATEGORIES)
+    },
+    subCategory: {
+        type: String,
+        required: true,
+        enum: allSubCats
+    },
+
+    listingType: {
+        type: String,
+        required: true,
+        enum: ['Sale', 'Rent'],
+        default: 'Sale'
+    },
+    rentalPeriod: {
+        type: String,
+        enum: ['hour', 'day', 'week', 'month', 'N/A'],
+        default: 'N/A'
+    },
+    conditionGrade: {
+        type: Number,
+        min: 1,
+        max: 10,
+        default: 5
+    },
+
+    specifications: {
+        make: String,
+        model: String,
+        year: Number,
+        area: String,
+        bedrooms: Number,
+        bathrooms: Number,
+        brand: String,
+        experience: String
+    },
+
+
+    searchContext: {
+        type: String
+    },
+    listingVector: {
+        type: [Number]
+    },
+
+
     reviews: [
         {
             type: Schema.Types.ObjectId,
             ref: "Review",
-        }],
+        }
+    ],
     owner: {
         type: Schema.Types.ObjectId,
         ref: "User"
     },
     geometry: {
         type: {
-            type: String, // Don't do `{ location: { type: String } }`
-            enum: ['Point'], // 'location.type' must be 'Point'
+            type: String,
+            enum: ['Point'],
             required: true
         },
         coordinates: {
@@ -45,19 +115,22 @@ const listingSchema = new Schema({
     }
 });
 
-
+// --- ORIGINAL DELETE LOGIC ---
 listingSchema.post('findOneAndDelete', async (listing) => {
     if (listing) {
+        // Delete associated reviews
         await Review.deleteMany({ _id: { $in: listing.reviews } });
-        // Delete all associated images from Cloudinary
-        if (listing.image.length > 0) {
+
+        // Delete images from Cloudinary
+        if (listing.image && listing.image.length > 0) {
             for (let image of listing.image) {
-                await cloudinary.uploader.destroy(image.filename);
+                if (image.filename) {
+                    await cloudinary.uploader.destroy(image.filename);
+                }
             }
         }
     }
 });
 
-
 const Listing = mongoose.model("Listing", listingSchema);
-module.exports = Listing; 
+module.exports = Listing;

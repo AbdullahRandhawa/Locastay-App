@@ -11,17 +11,22 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
     integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
 
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css" rel="stylesheet">
   <link rel="icon" type="image/png" href="/house-solid-full.svg" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.js"></script>
 
-  <title>Locastay</title>
+  <title>Rentlyst</title>
 </head>
 
-<body>
+<body class="bg-light-gray d-flex flex-column min-vh-100">
   <%- include("../includes/navbar.ejs") %>
-    <div class="container min-vh-100">
+    <div class="container flex-grow-1 my-4">
       <%- include("../includes/flash.ejs") %>
         <%- body %>
     </div>

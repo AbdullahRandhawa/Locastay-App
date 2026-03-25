@@ -21,6 +21,10 @@ const profileSchema = new Schema({
     },
     bio: String,
     phoneNumber: String,
+    agentContext: {
+        type: String,
+        default: 'No specific context gathered yet.'
+    },
     user: {
         type: Schema.Types.ObjectId,
         ref: 'User',

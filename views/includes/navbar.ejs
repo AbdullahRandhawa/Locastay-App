@@ -1,40 +1,66 @@
-<nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom sticky-top">
-  <div class="container-fluid">
-
-    <a class="navbar-brand ms-4" href="/listings"><i class="fa-solid fa-house"></i></a>
-
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand" href="/listings">
+      <i class="fa-solid fa-house"></i>
+    </a>
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup">
       <span class="navbar-toggler-icon"></span>
     </button>
+    
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <!-- Left side: Links -->
       <div class="navbar-nav">
         <a class="nav-link mx-3" href="/listings">Explore</a>
-        <a class=" nav-link ms-3" href="/listings/new">Add New Listing
-        </a>
+        <a class="nav-link ms-3" href="/listings/new">Add New Listing</a>
       </div>
 
-
-      <div class="navbar-nav ms-auto">
+      <!-- Center: Search Bar -->
+      <div class="navbar-nav mx-auto">
         <form class="d-flex search-bar" role="search" method="GET" action="/listings/search">
-          <input class="form-control me-2 search-input " type="search" placeholder="Search Destination" name="q" />
-          <button class="btn search-btn" type="submit"><i class="fa-solid fa-magnifying-glass"></i>Search</button>
+          <input class="form-control search-input" type="search" placeholder="Search destinations" name="q" />
+          <button class="btn search-btn" type="submit">
+            <i class="fa-solid fa-magnifying-glass"></i> Search
+          </button>
         </form>
       </div>
 
+      <!-- Right side: Agent button + Profile / Login -->
+      <div class="navbar-nav ms-auto align-items-center">
+        <% if(currUser) { %>
+          <a class="nav-link me-4 fw-medium" href="/agent">
+            Ask Rentlyst
+          </a>
+        <% } %>
 
-      <div class="navbar-nav ms-auto">
         <% if(!currUser) { %>
-          <a class="nav-link mx-3 " href="/signup"><b>Sign up</b></a>
-          <a class="nav-link mx-3" href="/login"><b>Log in</b></a>
-          <% } %>
-            <% if(currUser) { %>
-              <a class="nav-link mx-3" href="/logout">Log out</a>
-              <a class="nav-link mx-3" href="/profile"><b>Profile</b></a>
-              <% } %>
+          <a class="nav-link" href="/signup">Sign up</a>
+          <a class="nav-link" href="/login">Log in</a>
+        <% } %>
+        
+        <% if(currUser) { %>
+          <div class="dropdown">
+            <div class="user-menu" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fa-solid fa-bars"></i>
+              <div class="host-avatar" style="width: 32px; height: 32px; font-size: 0.9rem; overflow: hidden; border-radius: 50%;">
+                <% if(locals.currProfile && currProfile.profileImg && currProfile.profileImg.url && !currProfile.profileImg.url.includes('pexels.com')) { %>
+                  <img src="<%= currProfile.profileImg.url %>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                <% } else { %>
+                  <%= currUser.username ? currUser.username.charAt(0).toUpperCase() : 'U' %>
+                <% } %>
+              </div>
+            </div>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2"
+              aria-labelledby="dropdownMenuButton1">
+              <li><a class="dropdown-item fw-semibold" href="/profile">My Profile</a></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item" href="/logout">Log out</a></li>
+            </ul>
+          </div>
+        <% } %>
       </div>
     </div>
-
-  </div>
   </div>
 </nav>

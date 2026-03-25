@@ -1,0 +1,101 @@
+<% layout("layouts/boilerplate") %>
+
+    <link rel="stylesheet" href="/css/agent.css" />
+
+    <div class="agent-container">
+        <!-- LEFT: History Sidebar -->
+        <aside class="agent-history" id="agentHistory">
+            <div class="history-header">
+                <h5><i class="fa-solid fa-clock-rotate-left"></i> History</h5>
+                <button class="new-chat-btn" id="newChatBtn" title="New Chat">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <div class="history-list" id="historyList">
+                <% conversations.forEach(conv=> { %>
+                    <div class="history-item" data-id="<%= conv._id %>">
+                        <i class="fa-regular fa-message"></i>
+                        <span class="history-title">
+                            <%= conv.title %>
+                        </span>
+                        <button class="history-delete" data-id="<%= conv._id %>" title="Delete">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                    <% }) %>
+                        <% if (conversations.length===0) { %>
+                            <div class="history-empty">
+                                <i class="fa-regular fa-comment-dots"></i>
+                                <p>No conversations yet</p>
+                            </div>
+                            <% } %>
+            </div>
+        </aside>
+
+        <!-- MIDDLE: Chat Window -->
+        <main class="agent-chat">
+            <!-- Mobile toggle bar (no header on desktop) -->
+            <div class="mobile-toggle-bar d-lg-none">
+                <button class="history-toggle" id="historyToggle">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <button class="listings-toggle" id="listingsToggle">
+                    <i class="fa-solid fa-store"></i>
+                </button>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome Message -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <h4>Hey there! I'm your Rentlyst Agent</h4>
+                    <p>I know every listing on the platform. Ask me anything — I can help you find deals, compare
+                        options, and discover what you need.</p>
+                    <div class="quick-actions">
+                        <button class="quick-btn" data-query="Show me the best cars available">
+                            <i class="fa-solid fa-car"></i> Best cars
+                        </button>
+                        <button class="quick-btn" data-query="What apartments are available for rent?">
+                            <i class="fa-solid fa-building"></i> Apartments for rent
+                        </button>
+                        <button class="quick-btn" data-query="Find me cheap electronics under 5000">
+                            <i class="fa-solid fa-laptop"></i> Cheap electronics
+                        </button>
+                        <button class="quick-btn" data-query="What services are available?">
+                            <i class="fa-solid fa-wrench"></i> Services
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <div class="input-wrapper">
+                    <textarea id="chatInput" placeholder="Ask me about listings..." rows="1"></textarea>
+                    <button class="send-btn" id="sendBtn" disabled>
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- RIGHT: Matched Listings Sidebar -->
+        <aside class="agent-listings" id="agentListings">
+            <div class="listings-header">
+                <h5><i class="fa-solid fa-store"></i> Matched Listings</h5>
+                <span class="match-count" id="matchCount">0 found</span>
+            </div>
+            <div class="listings-panel" id="listingsPanel">
+                <div class="listings-empty" id="listingsEmpty">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <p>Listings matching your query will appear here</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Overlay for mobile sidebars -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Pass profile image to JS -->
+    <script>
+        window.__USER_PROFILE_IMG__ = "<%= profileImg %>";
+    </script>
+    <script src="/js/agent.js"></script>

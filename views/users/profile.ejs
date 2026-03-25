@@ -1,77 +1,113 @@
 <% layout('/layouts/boilerplate') %>
 
     <body>
-        <div class="container my-5">
-            <div class="row align-items-center mb-4">
-                <div class="col-md-3 col-sm-12 text-center mb-4">
-                    <img class="rounded-circle profile-img" src="<%= profile.profileImg.url %>" alt="Profile Image" />
-                </div>
-
-                <div class="col-md-9 col-sm-12">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-                        <h2 class="fw-bold mb-0">
+        <div class="container mt-5 mb-5">
+            <!-- Profile Header Card -->
+            <div class="row">
+                <div class="col-lg-4 col-md-5 mb-4 mb-md-0">
+                    <div class="card border-0 shadow-sm p-4 text-center h-100"
+                        style="border-radius: var(--radius-lg); background-color: var(--bg-main);">
+                        <div class="mb-3">
+                            <img class="profile-img-large shadow-sm" src="<%= profile.profileImg.url %>"
+                                alt="Profile Image" />
+                        </div>
+                        <h3 class="fw-bold mb-1">
                             <%= profile.fullName %>
-                        </h2>
-                        <div class="d-flex gap-2 mt-3 mt-md-0">
-                            <a href="/profile/edit" class="btn btn-outline-danger">
-                                Edit Profile
-                            </a>
-                            <a href="/listings/new" class="btn btn-danger">
-                                Add New Listing
-                            </a>
+                        </h3>
+                        <p class="text-muted mb-4">@<%= profile.username %>
+                        </p>
+
+                        <div class="d-grid gap-2">
+                            <a href="/profile/edit" class="btn btn-outline-dark"
+                                style="border-radius: var(--radius-sm);">Edit Profile</a>
                         </div>
                     </div>
-                    <div class="profile-details-grid">
-                        <p class="fs-5"><b>Username:</b>
-                            <%= profile.username %>
-                        </p>
-                        <p class="fs-5"><b>Country:</b>
-                            <%= profile.country %>
-                        </p>
-                        <p class="fs-5"><b>Email:</b>
-                            <%= profile.email %>
-                        </p>
-                        <p class="fs-5"><b>Contact:</b>
-                            <%= profile.phoneNumber %>
+                </div>
+
+                <div class="col-lg-8 col-md-7">
+                    <div class="card border-0 shadow-sm p-4 h-100"
+                        style="border-radius: var(--radius-lg); background-color: var(--bg-main);">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="fw-bold mb-0">About</h4>
+                            <a href="/listings/new" class="btn btn-primary-custom"><i class="fa-solid fa-plus me-2"></i>
+                                Add Listing</a>
+                        </div>
+
+                        <p class="fs-5 mb-4" style="color: var(--text-dark); line-height: 1.6;">
+                            <%= profile.bio || "No bio provided yet." %>
                         </p>
 
-                    </div>
-                    <div class="mt-3">
-                        <p><b>Bio:</b></p>
-                        <p>
-                            <%= profile.bio %>
-                        </p>
+                        <hr class="mb-4" style="border-color: var(--bg-tertiary);">
+
+                        <div class="row g-4">
+                            <div class="col-sm-6">
+                                <p class="mb-1 text-muted fs-6"><i class="fa-solid fa-earth-americas me-2"></i> Country
+                                </p>
+                                <p class="fs-5 fw-semibold mb-0">
+                                    <%= profile.country || "Not specified" %>
+                                </p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="mb-1 text-muted fs-6"><i class="fa-solid fa-envelope me-2"></i> Email</p>
+                                <p class="fs-5 fw-semibold mb-0">
+                                    <%= profile.email %>
+                                </p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="mb-1 text-muted fs-6"><i class="fa-solid fa-phone me-2"></i> Contact</p>
+                                <p class="fs-5 fw-semibold mb-0">
+                                    <%= profile.phoneNumber || "Not specified" %>
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <hr class="my-5">
+            <hr class="my-5" style="border-color: var(--bg-tertiary);">
 
-        <div class="container my-5">
-            <div class="text-center mb-4">
-                <h2 class="fw-bold">Your Listings</h2>
+            <!-- User's Listings -->
+            <div class="mb-4 text-center text-md-start">
+                <h3 class="fw-bold">Your Listings</h3>
             </div>
 
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                <% for(let listing of allListings){ %>
-                    <div class="col">
-                        <a href="/listings/<%= listing._id %>" class="listing-link">
-                            <div class="card listing-card h-100">
-                                <img src="<%= listing.image[0].url %>" class="card-img-top listing-img"
-                                    alt="<%= listing.title %>">
-                                <div class="card-body">
-                                    <h5 class="card-title">
-                                        <%= listing.title %>
-                                    </h5>
-                                    <p class="card-text">
-                                        &#8360; <%= listing.price.toLocaleString('en-PK') %>/ night
-                                    </p>
+                <% if(allListings && allListings.length> 0) { %>
+                    <% for(let listing of allListings){ %>
+                        <div class="col">
+                            <a href="/listings/<%= listing._id %>" class="listing-link">
+                                <div class="card listing-card h-100">
+                                    <div class="listing-img-container shadow-sm">
+                                        <img src="<%= listing.image[0].url %>" class="card-img-top"
+                                            alt="<%= listing.title %>">
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text mb-1"><b>
+                                                <%= listing.location %>, <%= listing.country %>
+                                            </b></p>
+                                        <p class="card-text mb-1">
+                                            <%= listing.title %>
+                                        </p>
+                                        <p class="price">&#8360; <%= listing.price.toLocaleString('en-PK') %> <span
+                                                    class="text-muted fw-normal">night</span></p>
+                                    </div>
                                 </div>
-                            </div>
-                        </a>
-                    </div>
-                    <%} %>
+                            </a>
+                        </div>
+                        <% } %>
+                            <% } else { %>
+                                <div class="col-12 w-100 text-center py-5">
+                                    <div class="p-5 border rounded"
+                                        style="background-color: var(--bg-secondary); border-color: var(--bg-tertiary) !important; border-radius: var(--radius-lg) !important;">
+                                        <i class="fa-solid fa-house-chimney fs-1 text-muted mb-3"></i>
+                                        <h4 class="fw-bold">No listings yet</h4>
+                                        <p class="text-muted mb-4">You haven't created any listings. Start hosting
+                                            today!</p>
+                                        <a href="/listings/new" class="btn btn-primary-custom">Create your first
+                                            listing</a>
+                                    </div>
+                                </div>
+                                <% } %>
             </div>
         </div>
     </body>

@@ -19,11 +19,11 @@ const flash = require('connect-flash');
 const Profile = require('./models/profile');
 
 
-
 const listingRoute = require('./routes/listing.js');
 const reviewRoute = require('./routes/review.js');
 const userRoute = require('./routes/user.js');
 const profileRoute = require('./routes/profile.js');
+const agentRoute = require('./routes/agent.js');
 
 const passport = require("passport");
 
@@ -44,7 +44,7 @@ main()
     });
 
 async function main() {
-    // mongoose.connect('mongodb://127.0.0.1:27017/locastay');
+    // mongoose.connect('mongodb://127.0.0.1:27017/rentlyst');
     mongoose.connect(ATLAS_URL);
 
 }
@@ -58,7 +58,7 @@ const store = MongoStore.create({
     touchAfter: 24 * 3600,
 })
 
-store.on("error", () => {
+store.on("error", (err) => {
     console.log("Error in Mongo session store", err);
 });
 
@@ -102,10 +102,24 @@ passport.deserializeUser(User.deserializeUser());
 
 
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
     res.locals.currUser = req.user;
+    
+    // Fetch profile for navbar avatar
+    if (req.user) {
+        try {
+            const profile = await Profile.findOne({ user: req.user._id }).lean();
+            res.locals.currProfile = profile;
+        } catch (e) {
+            console.error('Error fetching global profile:', e);
+            res.locals.currProfile = null;
+        }
+    } else {
+        res.locals.currProfile = null;
+    }
+    
     next();
 });
 
@@ -113,6 +127,7 @@ app.use((req, res, next) => {
 app.use('/listings', listingRoute);
 app.use('/listings/:id/reviews', reviewRoute);
 app.use('/', userRoute);
+app.use('/agent', agentRoute);
 app.use('/profile', profileRoute);
 
 

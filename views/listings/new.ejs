@@ -2,56 +2,409 @@
 
   <body>
     <div class="row">
-      <div class="col-10 col-lg-8 col-md-10  offset-1 offset-lg-2 offset-md-1 ">
-        <br />
-        <h3>Crete New Listing</h3>
-        <br />
+      <div class="col-10 col-lg-8 col-md-10 offset-1 offset-lg-2 offset-md-1">
+
         <form method="POST" action="/listings" class="needs-validation" novalidate enctype="multipart/form-data">
-          <div class="mb-3">
-            <label for="title" class="form-label">Title</label>
-            <input type="text" name="listing[title]" placeholder="enter a catche name..." class="form-control"
-              id="title" required />
-            <div class="valid-feedback">Title looks good!</div>
-          </div>
-          <br />
-          <div class="mb-3">
-            <label for="description" class="form-label">Descritption</label>
-            <textarea name="listing[description]" class="form-control" id="description" required></textarea>
-            <div class="invalid-feedback">Write a short description</div>
-          </div>
-          <br />
-          <div class="mb-3">
-            <label for="image" class="form-label">Upload Image</label>
-            <input type="file" name="listing[image]" class="form-control" required id="image" multiple />
-          </div>
-          <br />
-          <div class="mb-3">
-            <label for="location" class="form-label">Location</label>
-            <input type="text" name="listing[location]" placeholder="lahore..." class="form-control" id="location"
-              required />
-            <div class="invalid-feedback">Location should be valid!</div>
+
+          <!-- ==================== STEP 1: CATEGORY ==================== -->
+          <div id="step1">
+            <h3 class="fw-semibold text-center mt-3 mb-2">Create New Listing</h3>
+            <p class="text-muted text-center mb-5">Choose a category and listing type to get started</p>
+
+            <!-- Main Category Cards -->
+            <label class="form-label fw-semibold mb-3 text-dark">Category</label>
+            <div class="row g-3 mb-5 pb-2">
+              <% const catIcons={ Item: 'fa-box-open' , Vehicle: 'fa-car' , Property: 'fa-house' , Service: 'fa-wrench'
+                }; %>
+                <% Object.keys(CATEGORIES).forEach(cat=> { %>
+                  <div class="col-6 col-md-3">
+                    <input type="radio" name="listing[mainCategory]" id="cat-<%= cat %>" value="<%= cat %>"
+                      class="d-none cat-radio" required>
+                    <label for="cat-<%= cat %>" class="cat-card">
+                      <i class="fa-solid <%= catIcons[cat] || 'fa-tag' %>"></i>
+                      <span>
+                        <%= cat %>
+                      </span>
+                    </label>
+                  </div>
+                  <% }) %>
+            </div>
+
+            <!-- Listing Type Cards -->
+            <label class="form-label fw-semibold mb-3 text-dark">Listing Type</label>
+            <div class="row g-3 mb-5 pb-3">
+              <div class="col-6">
+                <input type="radio" name="listing[listingType]" id="type-Sale" value="Sale" class="d-none type-radio"
+                  checked required>
+                <label for="type-Sale" class="cat-card">
+                  <i class="fa-solid fa-tag"></i>
+                  <span>For Sale</span>
+                </label>
+              </div>
+              <div class="col-6">
+                <input type="radio" name="listing[listingType]" id="type-Rent" value="Rent" class="d-none type-radio">
+                <label for="type-Rent" class="cat-card">
+                  <i class="fa-solid fa-clock"></i>
+                  <span>For Rent</span>
+                </label>
+              </div>
+            </div>
+
+            <button type="button" id="nextBtn" class="btn btn-primary-custom w-100 fs-5 py-3 shadow-sm" disabled>Next
+              &rarr;</button>
           </div>
 
-          <br />
-          <div class="row">
-            <div class="mb-3 col-md-4">
-              <label for="price" class="form-label">Price</label>
-              <input type="number" name="listing[price]" placeholder="1100..." class="form-control" id="price"
-                required />
-              <div class="invalid-feedback">Price should be valid!</div>
+          <!-- ==================== STEP 2: DETAILS ==================== -->
+          <div id="step2" class="d-none">
+            <h3 class="fw-semibold text-center mt-3 mb-5">Listing Details</h3>
+            <div class="d-flex justify-content-start mb-4 pb-2">
+              <button type="button" id="backBtn" class="btn btn-outline-dark fw-semibold"
+                style="border-radius: var(--radius-sm); padding: 0.6rem 1.8rem;">&larr; Back to Category</button>
             </div>
-            <div class="mb-3 col-md-8">
-              <label for="countryy" class="form-label">Country</label>
-              <input type="text" name="listing[country]" placeholder="pakistan..." class="form-control" id="countryy"
-                required />
-              <div class="invalid-feedback">Country name should be valid!</div>
+
+            <!-- Title -->
+            <div class="mb-5">
+              <label for="title" class="form-label fw-semibold">Title</label>
+              <input type="text" name="listing[title]" placeholder="Enter a catchy name..."
+                class="form-control form-input" id="title" maxlength="100" required />
+              <div class="valid-feedback">Title looks good!</div>
             </div>
-            <br />
+
+            <!-- Image Upload -->
+            <div class="mb-5">
+              <label for="image" class="form-label fw-semibold">Upload Images</label>
+              <input type="file" name="listing[image]" class="form-control form-input form-input-file" id="image"
+                multiple />
+            </div>
+
+            <!-- Sub Category + Rental Period -->
+            <div class="row mb-5">
+              <div class="col-md-6 mb-5 mb-md-0">
+                <label for="subCategory" class="form-label fw-semibold">Sub Category</label>
+                <div class="select-wrapper">
+                  <select name="listing[subCategory]" id="subCategory" class="form-select form-input custom-select"
+                    required>
+                    <option value="" disabled selected>Select sub category...</option>
+                  </select>
+                </div>
+                <div class="invalid-feedback">Please select a sub category</div>
+              </div>
+              <div class="col-md-6 d-none" id="rentalPeriodGroup">
+                <label for="rentalPeriod" class="form-label fw-semibold">Rental Period</label>
+                <div class="select-wrapper">
+                  <select name="listing[rentalPeriod]" id="rentalPeriod" class="form-select form-input custom-select">
+                    <option value="N/A" selected>Not Applicable</option>
+                    <option value="hour">Per Hour</option>
+                    <option value="day">Per Day</option>
+                    <option value="week">Per Week</option>
+                    <option value="month">Per Month</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Category-Specific Specs -->
+            <div class="specs-group d-none" id="specsVehicle">
+              <label class="form-label fw-semibold mb-3">Vehicle Details</label>
+              <div class="row mb-5">
+                <div class="col-md-4 mb-4 mb-md-0">
+                  <input type="text" name="listing[specifications][make]" placeholder="Make (e.g. Toyota)"
+                    class="form-control form-input" disabled>
+                </div>
+                <div class="col-md-4 mb-4 mb-md-0">
+                  <input type="text" name="listing[specifications][model]" placeholder="Model (e.g. Corolla)"
+                    class="form-control form-input" disabled>
+                </div>
+                <div class="col-md-4">
+                  <input type="number" name="listing[specifications][year]" placeholder="Year (e.g. 2022)"
+                    class="form-control form-input" min="1900" max="2026" disabled>
+                </div>
+              </div>
+            </div>
+            <div class="specs-group d-none" id="specsProperty">
+              <label class="form-label fw-semibold text-primary mb-3">Property Details</label>
+              <div class="row mb-5">
+                <div class="col-md-4 mb-4 mb-md-0">
+                  <input type="text" name="listing[specifications][area]" placeholder="Area (e.g. 5 Marla)"
+                    class="form-control form-input" disabled>
+                </div>
+                <div class="col-md-4 mb-4 mb-md-0">
+                  <input type="number" name="listing[specifications][bedrooms]" placeholder="Bedrooms"
+                    class="form-control form-input" min="0" disabled>
+                </div>
+                <div class="col-md-4">
+                  <input type="number" name="listing[specifications][bathrooms]" placeholder="Bathrooms"
+                    class="form-control form-input" min="0" disabled>
+                </div>
+              </div>
+            </div>
+            <div class="specs-group d-none" id="specsItem">
+              <label class="form-label fw-semibold mb-3">Item Details</label>
+              <div class="row mb-5">
+                <div class="col-md-6 mb-4 mb-md-0">
+                  <input type="text" name="listing[specifications][brand]" placeholder="Brand (e.g. Samsung)"
+                    class="form-control form-input" disabled>
+                </div>
+                <div class="col-md-6">
+                  <input type="text" name="listing[specifications][model]" placeholder="Model (e.g. Galaxy S24)"
+                    class="form-control form-input" disabled>
+                </div>
+              </div>
+            </div>
+            <div class="specs-group d-none" id="specsService">
+              <label class="form-label fw-semibold text-primary mb-3">Service Details</label>
+              <div class="mb-5">
+                <input type="text" name="listing[specifications][experience]" placeholder="Experience (e.g. 5 years)"
+                  class="form-control form-input" disabled>
+              </div>
+            </div>
+
+            <!-- Price + Condition -->
+            <div class="row mb-5">
+              <div class="col-md-6 mb-5 mb-md-0">
+                <label for="price" class="form-label fw-semibold">Price</label>
+                <div class="input-group">
+                  <span class="input-group-text ig-custom">&#8360;</span>
+                  <input type="number" name="listing[price]" placeholder="0"
+                    class="form-control form-input border-start-0 border-end-0" id="price" min="0" required
+                    style="border-radius: 0;" />
+                  <span class="input-group-text ig-custom" id="priceSuffix"></span>
+                </div>
+                <div class="invalid-feedback">Price should be valid!</div>
+              </div>
+              <div class="col-md-6">
+                <label for="conditionGrade" class="form-label fw-semibold">Condition: <span
+                    id="conditionValue">5</span>/10</label>
+                <input type="range" name="listing[conditionGrade]" class="form-range mt-3" id="conditionGrade" min="1"
+                  max="10" value="5">
+                <div class="d-flex justify-content-between">
+                  <small class="fw-bold text-muted">Poor</small>
+                  <small class="fw-bold text-muted">Excellent</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Address -->
+            <div class="mb-5">
+              <label for="address" class="form-label fw-semibold">Address</label>
+              <input type="text" name="listing[address]" placeholder="e.g. Street 5, Block B..."
+                class="form-control form-input" id="address" required />
+              <div class="invalid-feedback">Address is required!</div>
+            </div>
+
+            <!-- City + Country -->
+            <div class="row mb-5">
+              <div class="col-md-6 mb-5 mb-md-0">
+                <label for="city" class="form-label fw-semibold">City</label>
+                <input type="text" name="listing[city]" placeholder="e.g. Lahore..." class="form-control form-input"
+                  id="city" required />
+                <div class="invalid-feedback">City is required!</div>
+              </div>
+              <div class="col-md-6">
+                <label for="countryy" class="form-label fw-semibold">Country</label>
+                <input type="text" name="listing[country]" placeholder="e.g. Pakistan..."
+                  class="form-control form-input" id="countryy" required />
+                <div class="invalid-feedback">Country name should be valid!</div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-5 pb-3">
+              <label for="description" class="form-label fw-semibold">Description</label>
+              <textarea name="listing[description]" class="form-control form-input" id="description" rows="5"
+                required></textarea>
+              <div class="invalid-feedback">Write a short description</div>
+            </div>
+
+            <button class="btn btn-primary-custom w-100 fs-4 mb-5 py-3 shadow-sm">Create Listing</button>
           </div>
-          <br />
-          <button class="btn btn-dark custom-btn">Add</button>
-          <br /><br /><br />
+
         </form>
       </div>
     </div>
   </body>
+
+  <style>
+    /* Category / Type Selection Cards */
+    .cat-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      padding: 1.6rem 0.75rem;
+      border: 2px solid var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      background: var(--bg-main);
+      text-align: center;
+      min-height: 120px;
+    }
+
+    .cat-card i {
+      font-size: 1.8rem;
+      color: var(--text-light);
+      /* Lighter unselected color */
+      transition: color var(--transition-fast);
+    }
+
+    .cat-card span {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--text-muted);
+    }
+
+    .cat-card:hover {
+      border-color: #999;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .cat-card:hover i {
+      color: #666;
+    }
+
+    .cat-radio:checked+.cat-card,
+    .type-radio:checked+.cat-card {
+      border-color: var(--primary) !important;
+      background: rgba(255, 56, 92, 0.04);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    .cat-radio:checked+.cat-card i,
+    .type-radio:checked+.cat-card i {
+      color: var(--primary) !important;
+    }
+
+    .cat-radio:checked+.cat-card span,
+    .type-radio:checked+.cat-card span {
+      color: #111;
+    }
+
+    /* Darker input / select borders */
+    .form-input {
+      border: 2px solid #919191 !important;
+      padding: 0.8rem 1.2rem;
+      font-size: 1.05rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+      color: #222;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 4px rgba(255, 56, 92, 0.1) !important;
+      outline: none;
+    }
+
+    .form-input::placeholder {
+      color: #999;
+    }
+
+    /* File Input Specific */
+    .form-input-file {
+      padding: 0.6rem 1rem;
+    }
+
+    /* Modern Dropdown SVG and container */
+    .select-wrapper {
+      position: relative;
+    }
+
+    .custom-select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-color: #fff;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1.2rem center;
+      background-size: 1.2rem;
+      padding-right: 3rem !important;
+      cursor: pointer;
+    }
+
+    .custom-select:hover {
+      border-color: #333 !important;
+    }
+
+    /* Input Group Styling for Price */
+    .ig-custom {
+      border: 2px solid #555;
+      background: var(--bg-secondary);
+      font-weight: 700;
+      color: #333;
+      font-size: 1.1rem;
+      padding: 0 1.2rem;
+    }
+  </style>
+
+  <script id="categoriesData" type="application/json"><%- JSON.stringify(CATEGORIES) %></script>
+  <script>
+    const CATEGORIES = JSON.parse(document.getElementById('categoriesData').textContent);
+
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const nextBtn = document.getElementById('nextBtn');
+    const backBtn = document.getElementById('backBtn');
+    const subCatSelect = document.getElementById('subCategory');
+    const rentalGroup = document.getElementById('rentalPeriodGroup');
+    const rentalSelect = document.getElementById('rentalPeriod');
+    const priceSuffix = document.getElementById('priceSuffix');
+    const condSlider = document.getElementById('conditionGrade');
+    const condValue = document.getElementById('conditionValue');
+
+    let selectedCat = null;
+
+    // Category selection — enable Next button
+    document.querySelectorAll('.cat-radio').forEach(r => {
+      r.addEventListener('change', () => { selectedCat = r.value; nextBtn.disabled = false; });
+    });
+
+    // Listing type toggle — rental period
+    document.querySelectorAll('.type-radio').forEach(r => {
+      r.addEventListener('change', () => {
+        if (r.value === 'Rent') { rentalGroup.classList.remove('d-none'); rentalSelect.value = 'month'; }
+        else { rentalGroup.classList.add('d-none'); rentalSelect.value = 'N/A'; }
+        updatePriceSuffix();
+      });
+    });
+
+    // Step navigation
+    nextBtn.addEventListener('click', () => {
+      step1.classList.add('d-none');
+      step2.classList.remove('d-none');
+      // Populate subcategories
+      const subs = CATEGORIES[selectedCat] || [];
+      subCatSelect.innerHTML = '<option value="" disabled selected>Select sub category...</option>';
+      subs.forEach(sub => { const o = document.createElement('option'); o.value = sub; o.textContent = sub; subCatSelect.appendChild(o); });
+      updateSpecs(selectedCat);
+      updatePriceSuffix();
+    });
+
+    backBtn.addEventListener('click', () => { step2.classList.add('d-none'); step1.classList.remove('d-none'); });
+
+    // Price suffix
+    rentalSelect.addEventListener('change', updatePriceSuffix);
+    function updatePriceSuffix() {
+      const t = document.querySelector('.type-radio:checked');
+      const p = rentalSelect.value;
+      if (!t || t.value === 'Sale' || p === 'N/A') {
+        priceSuffix.textContent = '';
+        priceSuffix.classList.add('d-none');
+      } else {
+        priceSuffix.textContent = '/ ' + p;
+        priceSuffix.classList.remove('d-none');
+      }
+    }
+
+    // Condition slider
+    condSlider.addEventListener('input', () => { condValue.textContent = condSlider.value; });
+
+    // Specs: disable hidden, enable visible
+    function updateSpecs(cat) {
+      document.querySelectorAll('.specs-group').forEach(g => { g.classList.add('d-none'); g.querySelectorAll('input').forEach(i => i.disabled = true); });
+      const m = { 'Vehicle': 'specsVehicle', 'Property': 'specsProperty', 'Item': 'specsItem', 'Service': 'specsService' };
+      if (m[cat]) { const el = document.getElementById(m[cat]); el.classList.remove('d-none'); el.querySelectorAll('input').forEach(i => i.disabled = false); }
+    }
+  </script>

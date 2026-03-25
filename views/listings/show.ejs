@@ -1,7 +1,8 @@
 <% layout("/layouts/boilerplate") %>
+  <div id="listing-data" data-listing="<%= JSON.stringify(idListing) %>" style="display:none"></div>
   <script>
-    const mapToken = "<%= process.env.MAP_TOKEN %>";
-    const listing = JSON.parse('<%- JSON.stringify(idListing) %>');
+    window.mapToken = "<%= process.env.MAP_TOKEN %>";
+    window.listing = JSON.parse(document.getElementById('listing-data').dataset.listing);
   </script>
 
   <body>
@@ -13,58 +14,178 @@
     <div class="row">
       <div class="col-10 col-lg-8 col-md-10  offset-1 offset-lg-2 offset-md-1 ">
         <br />
-        <h3>
-          <%= idListing.title %>
-        </h3>
-        <br />
-      </div>
-      <div class="col-10 col-lg-8 col-md-10  offset-1 offset-lg-2 offset-md-1 ">
-        <div class="card listing-card ">
-          <div id="carouselIndicators" class="carousel slide carousel-dark">
-            <div class="carousel-indicators">
-              <% idListing.image.forEach((image, index)=> { %>
-                <button type="button" data-bs-target="#carouselIndicators" data-bs-slide-to="<%= index %>"
-                  class="<%= index === 0 ? 'active' : '' %>" aria-current="<%= index === 0 ? 'true' : 'false' %>"
-                  aria-label="Slide <%= index + 1 %>">
-                </button>
-                <% }); %>
-            </div>
-            <div class="carousel-inner">
-              <% idListing.image.forEach((image, index)=> { %>
-                <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                  <img src="<%= image.url %>" class="d-block w-100 show-img" alt="listing-image">
-                </div>
-                <% }); %>
-            </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#carouselIndicators"
-              data-bs-slide="prev">
-              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#carouselIndicators"
-              data-bs-slide="next">
-              <span class="carousel-control-next-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Next</span>
-            </button>
+        <div class="show-header">
+          <h3>
+            <%= idListing.title %>
+          </h3>
+          <p class="text-muted">
+            <%= idListing.city %>, <%= idListing.country %>
+          </p>
+          <!-- Category & Type Badges -->
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <% if(idListing.mainCategory) { %>
+              <span class="badge bg-primary">
+                <%= idListing.mainCategory %>
+              </span>
+              <% } %>
+                <% if(idListing.subCategory) { %>
+                  <span class="badge bg-secondary">
+                    <%= idListing.subCategory %>
+                  </span>
+                  <% } %>
+                    <% if(idListing.listingType) { %>
+                      <span class="badge bg-<%= idListing.listingType === 'Rent' ? 'warning text-dark' : 'success' %>">
+                        For <%= idListing.listingType %>
+                      </span>
+                      <% } %>
           </div>
-          <div class="card-body">
-            <p class="card-text mt-1">
-              Owned by <i><b>
-                  <%= idListing.owner ? idListing.owner.username : 'Unknown User' %>
-                </b></i>
-            </p>
-            <br />
-            <p class="card-text">
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-8 col-md-10 offset-lg-2 offset-md-1">
+        <div class="show-img-container position-relative">
+          <% if(idListing.image && idListing.image.length> 1) { %>
+            <div id="listingCarousel" class="carousel slide h-100" data-bs-ride="carousel">
+              <div class="carousel-inner h-100">
+                <% idListing.image.forEach((image, index)=> { %>
+                  <div class="carousel-item h-100 <%= index === 0 ? 'active' : '' %>">
+                    <img src="<%= image.url %>" class="d-block w-100 show-img" alt="listing-image">
+                  </div>
+                  <% }); %>
+              </div>
+              <button class="carousel-control-prev" type="button" data-bs-target="#listingCarousel"
+                data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+              </button>
+              <button class="carousel-control-next" type="button" data-bs-target="#listingCarousel"
+                data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+              </button>
+            </div>
+            <% } else if(idListing.image && idListing.image.length===1) { %>
+              <img src="<%= idListing.image[0].url %>" class="d-block w-100 show-img" alt="listing-image">
+              <% } else { %>
+                <img src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=1200"
+                  class="d-block w-100 show-img" alt="placeholder">
+                <% } %>
+        </div>
+
+        <div class="host-info">
+          <div class="host-avatar">
+            <%= idListing.owner ? idListing.owner.username.charAt(0).toUpperCase() : 'U' %>
+          </div>
+          <div>
+            <h5 class="mb-0 fw-semibold">Hosted by <%= idListing.owner ? idListing.owner.username : 'Unknown User' %>
+            </h5>
+            <span class="text-muted small">Superhost &middot; Joined recently</span>
+          </div>
+          <a href="http://localhost:5173/?receiverId=<%= idListing.owner ? idListing.owner._id : '' %>"
+            class="btn btn-primary-custom ms-auto" style="padding: 0.5rem 1rem;">
+            Message Host
+          </a>
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-8">
+            <h5 class="fw-semibold mb-3">About this listing</h5>
+            <p class="description">
               <%= idListing.description %>
             </p>
-            <p class="card-text">&#8360; <%= idListing.price.toLocaleString('en-PK') %>
-            </p>
-            <p class="card-text">
-              <%= idListing.location %>
-            </p>
-            <p class="card-text">
-              <%= idListing.country %>
-            </p>
+
+            <!-- Dynamic Price Display -->
+            <div class="mt-4 p-4 border rounded" style="background-color: var(--bg-secondary);">
+              <h5 class="fw-semibold mb-1">&#8360; <%= idListing.price.toLocaleString('en-PK') %>
+                  <% if(idListing.listingType==='Rent' && idListing.rentalPeriod && idListing.rentalPeriod !=='N/A' ) {
+                    %>
+                    <span class="fw-normal text-muted fs-6">/ <%= idListing.rentalPeriod %></span>
+                    <% } %>
+              </h5>
+            </div>
+
+            <!-- Condition Grade -->
+            <% if(idListing.conditionGrade) { %>
+              <div class="mt-3">
+                <span class="fw-semibold">Condition:</span>
+                <span class="ms-1">
+                  <%= idListing.conditionGrade %>/10
+                </span>
+                <% var barWidth=idListing.conditionGrade * 10; var gradeColor='#dc3545' ; if (idListing.conditionGrade>=
+                  7) { gradeColor = '#28a745'; }
+                  else if (idListing.conditionGrade >= 4) { gradeColor = '#ffc107'; }
+                  var barStyle = 'width:' + barWidth + '%;background-color:' + gradeColor + ';'; %>
+                  <div class="progress mt-1" style="height: 8px;">
+                    <div class="progress-bar" role="progressbar" style="<%= barStyle %>">
+                    </div>
+                  </div>
+              </div>
+              <% } %>
+
+                <!-- Specifications -->
+                <% if(idListing.specifications) { %>
+                  <% const specs=idListing.specifications; %>
+                    <% const hasSpecs=specs.make || specs.model || specs.year || specs.area || specs.bedrooms ||
+                      specs.bathrooms || specs.brand || specs.experience; %>
+                      <% if(hasSpecs) { %>
+                        <div class="mt-4">
+                          <h6 class="fw-semibold mb-2">Specifications</h6>
+                          <div class="row g-2">
+                            <% if(specs.make) { %>
+                              <div class="col-auto"><span class="badge bg-light text-dark border px-3 py-2">Make: <%=
+                                    specs.make %></span></div>
+                              <% } %>
+                                <% if(specs.model) { %>
+                                  <div class="col-auto"><span class="badge bg-light text-dark border px-3 py-2">Model:
+                                      <%= specs.model %>
+                                    </span></div>
+                                  <% } %>
+                                    <% if(specs.year) { %>
+                                      <div class="col-auto"><span
+                                          class="badge bg-light text-dark border px-3 py-2">Year: <%= specs.year %>
+                                        </span></div>
+                                      <% } %>
+                                        <% if(specs.area) { %>
+                                          <div class="col-auto"><span
+                                              class="badge bg-light text-dark border px-3 py-2">Area: <%= specs.area %>
+                                            </span></div>
+                                          <% } %>
+                                            <% if(specs.bedrooms !=null) { %>
+                                              <div class="col-auto"><span
+                                                  class="badge bg-light text-dark border px-3 py-2">Bedrooms: <%=
+                                                    specs.bedrooms %></span></div>
+                                              <% } %>
+                                                <% if(specs.bathrooms !=null) { %>
+                                                  <div class="col-auto"><span
+                                                      class="badge bg-light text-dark border px-3 py-2">Bathrooms: <%=
+                                                        specs.bathrooms %></span></div>
+                                                  <% } %>
+                                                    <% if(specs.brand) { %>
+                                                      <div class="col-auto"><span
+                                                          class="badge bg-light text-dark border px-3 py-2">Brand: <%=
+                                                            specs.brand %></span></div>
+                                                      <% } %>
+                                                        <% if(specs.experience) { %>
+                                                          <div class="col-auto"><span
+                                                              class="badge bg-light text-dark border px-3 py-2">Experience:
+                                                              <%= specs.experience %>
+                                                            </span></div>
+                                                          <% } %>
+                          </div>
+                        </div>
+                        <% } %>
+                          <% } %>
+
+                            <!-- Address -->
+                            <% if(idListing.address) { %>
+                              <div class="mt-3">
+                                <span class="fw-semibold">Address:</span>
+                                <span class="text-muted">
+                                  <%= idListing.address %>
+                                </span>
+                              </div>
+                              <% } %>
+
           </div>
         </div>
       </div>
@@ -72,11 +193,12 @@
         <div class="col-10 col-lg-8 col-md-10  offset-1 offset-lg-2 offset-md-1">
           <div class="row">
             <div class="col-3">
-              <a href="/listings/<%= idListing._id %>/edit" class="btn custom-btn">Edit</a>
+              <a href="/listings/<%= idListing._id %>/edit" class="btn btn-primary-custom">Edit Listing</a>
             </div>
-            <div class="col-2">
+            <div class="col-auto">
               <form method="post" action="/listings/<%= idListing._id %>?_method=DELETE">
-                <button class="btn custom-btn">Delete</button>
+                <button class="btn btn-outline-danger"
+                  style="border-radius: var(--radius-sm); padding: 0.75rem 1.5rem; font-weight: 600;">Delete</button>
               </form>
             </div>
           </div>
@@ -106,8 +228,6 @@
                   </fieldset>
                 </div>
 
-
-
                 <div class="mb-3 mt-3">
                   <label for="comment" class="form-label">Comment</label>
                   <textarea name="review[comment]" id="comment" cols="30" rows="5" class="form-control"
@@ -118,12 +238,11 @@
               </form>
               <br>
 
-
             </div>
             <% } %>
-              <div class="col-10 col-lg-8 col-md-10  offset-1 offset-lg-2 offset-md-1">
-                <hr><br>
-                <h4>All Reviews</h4>
+              <div class="col-10 col-lg-8 col-md-10  offset-lg-2 offset-md-1">
+                <hr class="my-5"><br>
+                <h4 class="fw-semibold mb-4">Reviews</h4>
                 <br>
 
                 <div class="row">
@@ -154,9 +273,17 @@
                     <% } %>
                 </div>
               </div>
-              <div class="col-10 col-lg-8 col-md-10  offset-1 offset-lg-2 offset-md-1 ">
-                <h4>Where you'll be</h4>
-                <div id="map"></div>
+              <div class="col-10 col-lg-8 col-md-10 offset-lg-2 offset-md-1 mb-5">
+                <hr class="my-5">
+                <h4 class="fw-semibold mb-4">Where you'll be</h4>
+                <p class="text-muted">
+                  <% if(idListing.address) { %>
+                    <%= idListing.address %>, <% } %>
+                        <%= idListing.city %>, <%= idListing.country %>
+                </p>
+                <div class="map-container">
+                  <div id="map"></div>
+                </div>
               </div>
     </div>
     </div>

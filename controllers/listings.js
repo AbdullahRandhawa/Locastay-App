@@ -52,6 +52,10 @@ function buildSearchContext(listing) {
         parts.push(`Description: ${desc}`);
     }
 
+    if (listing.reviewSummary) {
+        parts.push(`Guest Review Summary: ${listing.reviewSummary}`);
+    }
+
     return parts.join(' | ');
 }
 

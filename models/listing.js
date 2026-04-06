@@ -91,6 +91,13 @@ const listingSchema = new Schema({
         type: [Number]
     },
 
+    // AI-generated review intelligence
+    reviewSummary: {
+        type: String,
+        default: null
+    },
+
+
 
     reviews: [
         {

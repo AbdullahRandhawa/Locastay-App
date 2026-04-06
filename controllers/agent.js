@@ -1,17 +1,8 @@
 const Conversation = require('../models/conversation');
 const Profile = require('../models/profile');
 const Listing = require('../models/listing');
-const OpenAI = require('openai');
 const { generateEmbedding, cosineSimilarity } = require('../utils/embedding');
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENROUTER_API_KEY,
-    baseURL: 'https://openrouter.ai/api/v1',
-    defaultHeaders: {
-        'HTTP-Referer': 'https://rentlyst.com',
-        'X-Title': 'Rentlyst'
-    }
-});
+const openai = require('../utils/openai');
 
 const LLM_MODEL = process.env.OPENROUTER_LLM_MODEL || 'meta-llama/llama-3.1-8b-instruct:free';
 
@@ -31,11 +22,21 @@ Your personality:
 // HELPER FUNCTIONS
 // ==========================================
 
+// Per-user cooldown: prevents summarization from firing more than once per 30s per user
+const summarizeCooldown = new Map(); // userId -> last run timestamp (ms)
+const SUMMARIZE_COOLDOWN_MS = 30 * 1000; // 30 seconds
+
 /**
  * Summarize unsummarized messages across ALL conversations for this user.
  * Only processes conversations that have 5+ new (unsummarized) messages.
+ * Skips if called again within SUMMARIZE_COOLDOWN_MS for the same user.
  */
 async function summarizeUnsummarizedChats(userId) {
+    const userKey = userId.toString();
+    const now = Date.now();
+    const lastRun = summarizeCooldown.get(userKey) || 0;
+    if (now - lastRun < SUMMARIZE_COOLDOWN_MS) return; // still in cooldown
+    summarizeCooldown.set(userKey, now);
     try {
         const conversations = await Conversation.find({
             user: userId,
@@ -168,6 +169,9 @@ module.exports.handleMessage = async (req, res) => {
 
         if (!message || !message.trim()) {
             return res.status(400).json({ error: 'Message cannot be empty' });
+        }
+        if (message.trim().length > 800) {
+            return res.status(400).json({ error: 'Message is too long. Please keep it under 800 characters.' });
         }
 
         let conversation;

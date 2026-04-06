@@ -130,9 +130,18 @@ app.use('/', userRoute);
 app.use('/agent', agentRoute);
 app.use('/profile', profileRoute);
 
-
-
-
+app.get('/messages', isLoggedIn, async (req, res) => {
+    try {
+        const { admin } = require('./firebaseAdmin');
+        const receiverId = req.query.receiverId || '';
+        const firebaseToken = await admin.auth().createCustomToken(req.user._id.toString());
+        res.render('messages.ejs', { receiverId, fbToken: firebaseToken, hideFooter: true });
+    } catch (err) {
+        console.error("Error generating token for messages iframe:", err);
+        req.flash('error', 'Could not load messenger.');
+        res.redirect('/listings');
+    }
+});
 
 //Root----------------------
 app.get('/', (req, res) => {

@@ -81,7 +81,7 @@
             </h5>
             <span class="text-muted small">Superhost &middot; Joined recently</span>
           </div>
-          <a href="http://localhost:5173/?receiverId=<%= idListing.owner ? idListing.owner._id : '' %>"
+          <a href="/messages?receiverId=<%= idListing.owner ? idListing.owner._id : '' %>"
             class="btn btn-primary-custom ms-auto" style="padding: 0.5rem 1rem;">
             Message Host
           </a>
@@ -111,14 +111,20 @@
                 <span class="ms-1">
                   <%= idListing.conditionGrade %>/10
                 </span>
-                <% var barWidth=idListing.conditionGrade * 10; var gradeColor='#dc3545' ; if (idListing.conditionGrade>=
-                  7) { gradeColor = '#28a745'; }
-                  else if (idListing.conditionGrade >= 4) { gradeColor = '#ffc107'; }
-                  var barStyle = 'width:' + barWidth + '%;background-color:' + gradeColor + ';'; %>
+                <% var barWidth=idListing.conditionGrade * 10; var gradeColor='#dc3545'; if (idListing.conditionGrade >= 7) { gradeColor = '#28a745'; } else if (idListing.conditionGrade >= 4) { gradeColor = '#ffc107'; } %>
                   <div class="progress mt-1" style="height: 8px;">
-                    <div class="progress-bar" role="progressbar" style="<%= barStyle %>">
+                    <div class="progress-bar" role="progressbar"
+                      data-bar-width="<%= barWidth %>"
+                      data-bar-color="<%= gradeColor %>">
                     </div>
                   </div>
+                  <script>
+                    (function(){
+                      var bar = document.currentScript.previousElementSibling.querySelector('.progress-bar');
+                      bar.style.width = bar.dataset.barWidth + '%';
+                      bar.style.backgroundColor = bar.dataset.barColor;
+                    })();
+                  </script>
               </div>
               <% } %>
 
@@ -203,12 +209,70 @@
             </div>
           </div>
           <br>
-          <hr>
+          <hr class="my-5">
         </div>
         <% }%>
+
+          <div class="col-10 col-lg-8 col-md-10  offset-lg-2 offset-md-1">
+
+
+            <%# ── AI REVIEW SUMMARY CARD ── %>
+              <% if (idListing.reviewSummary) { %>
+                <div class="row mb-5">
+                  <div class="col-12">
+                    <div class="card p-2 border-secondary" style="background-color: var(--bg-secondary);">
+                      <div class="card-body">
+                        <h5 class="card-title d-flex align-items-center gap-2">
+                          AI Review Summary
+                        </h5>
+                        <p class="card-text mt-3">
+                          <%= idListing.reviewSummary %>
+                        </p>
+                        <p class="card-text text-muted" style="font-size: 0.8rem; margin-top: 1rem; margin-bottom: 0;">
+                          Auto-generated based on the feedback.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <% } %>
+
+                  <h4 class="fw-semibold mb-4">Reviews</h4>
+                  <br>
+
+                  <div class="row">
+                    <% for(review of idListing.reviews) {%>
+                      <div class="col-md-6 mb-3">
+                        <div class="card p-2">
+                          <div class="card-body">
+                            <h5 class="card-title">
+                              <%= review.author.username %>
+                            </h5>
+                            <p class="card-text starability-result" data-rating="<%= review.rating %>">
+                            </p>
+                            <p class="card-text">
+                              <%= review.comment %>
+                            </p>
+
+                            <form method="POST"
+                              action="/listings/<%= idListing._id %>/reviews/<%= review._id %>?_method=DELETE">
+                              <% if(currUser && (currUser._id.equals(idListing.owner._id) ||
+                                currUser._id.equals(review.author._id))) { %>
+                                <button class="btn btn-sm btn-dark">Delete</button>
+                                <% } %>
+                            </form>
+
+                          </div>
+                        </div>
+                      </div>
+                      <% } %>
+                  </div>
+          </div>
+
+
           <% if(currUser) { %>
             <div class="col-10 col-lg-8 col-md-10  offset-1 offset-lg-2 offset-md-1">
-
+              <hr class="my-5">
               <h3>Leave a Review</h3>
               <form method="POST" action="/listings/<%= idListing._id %>/reviews" novalidate class="needs-validation">
                 <div class="mb-3 mt-3">
@@ -240,39 +304,6 @@
 
             </div>
             <% } %>
-              <div class="col-10 col-lg-8 col-md-10  offset-lg-2 offset-md-1">
-                <hr class="my-5"><br>
-                <h4 class="fw-semibold mb-4">Reviews</h4>
-                <br>
-
-                <div class="row">
-                  <% for(review of idListing.reviews) {%>
-                    <div class="col-md-6 mb-3">
-                      <div class="card p-2">
-                        <div class="card-body">
-                          <h5 class="card-title">
-                            <%= review.author.username %>
-                          </h5>
-                          <p class="card-text starability-result" data-rating="<%= review.rating %>">
-                          </p>
-                          <p class="card-text">
-                            <%= review.comment %>
-                          </p>
-
-                          <form method="POST"
-                            action="/listings/<%= idListing._id %>/reviews/<%= review._id %>?_method=DELETE">
-                            <% if(currUser && (currUser._id.equals(idListing.owner._id) ||
-                              currUser._id.equals(review.author._id))) { %>
-                              <button class="btn btn-sm btn-dark">Delete</button>
-                              <% } %>
-                          </form>
-
-                        </div>
-                      </div>
-                    </div>
-                    <% } %>
-                </div>
-              </div>
               <div class="col-10 col-lg-8 col-md-10 offset-lg-2 offset-md-1 mb-5">
                 <hr class="my-5">
                 <h4 class="fw-semibold mb-4">Where you'll be</h4>

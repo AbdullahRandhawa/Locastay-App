@@ -27,11 +27,28 @@
     let currentConversationId = null;
     let isLoading = false;
 
-    // --- Auto-grow textarea ---
+    const MAX_MSG = 800;
+
+    // --- Auto-grow textarea + character counter ---
     chatInput.addEventListener('input', () => {
         chatInput.style.height = 'auto';
         chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
-        sendBtn.disabled = !chatInput.value.trim();
+        const len = chatInput.value.length;
+        const overLimit = len > MAX_MSG;
+        sendBtn.disabled = !chatInput.value.trim() || overLimit;
+
+        // Show / update char counter
+        let counter = document.getElementById('charCounter');
+        if (!counter) {
+            counter = document.createElement('span');
+            counter.id = 'charCounter';
+            counter.style.cssText = 'font-size:11px;position:absolute;bottom:10px;right:48px;opacity:0.5;pointer-events:none;';
+            chatInput.parentElement.style.position = 'relative';
+            chatInput.parentElement.appendChild(counter);
+        }
+        counter.textContent = `${len}/${MAX_MSG}`;
+        counter.style.color = overLimit ? '#e74c3c' : '';
+        counter.style.opacity = len > 600 ? '1' : '0.4';
     });
 
     // --- Send on Enter (Shift+Enter for new line) ---
@@ -99,6 +116,24 @@
     }
 
     // ==========================================
+    // TOAST HELPER
+    // ==========================================
+
+    function showToast(message, type = 'error') {
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.cssText = `
+            position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+            background:${type === 'error' ? '#e74c3c' : '#2ecc71'};
+            color:#fff; padding:10px 20px; border-radius:8px; font-size:13px;
+            z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.3s ease;
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3500);
+    }
+
+    // ==========================================
     // CORE FUNCTIONS
     // ==========================================
 
@@ -122,14 +157,19 @@
         const typing = showTyping();
 
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
             const res = await fetch('/agent/message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message,
                     conversationId: currentConversationId
-                })
+                }),
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
 
             if (res.status === 401) {
                 typing.remove();
@@ -172,7 +212,11 @@
 
         } catch (err) {
             typing.remove();
-            appendMessage('agent', 'Sorry, I encountered an error. Please try again.');
+            if (err.name === 'AbortError') {
+                appendMessage('agent', 'The request timed out. The AI may be busy — please try again in a moment.');
+            } else {
+                appendMessage('agent', 'Sorry, I encountered an error. Please try again.');
+            }
             console.error('Agent error:', err);
         }
 
@@ -326,17 +370,27 @@
             const emptyEl = historyList.querySelector('.history-empty');
             if (emptyEl) emptyEl.remove();
 
-            // Add new item at top
+            // Add new item at top — build via DOM to avoid XSS from user-supplied titles
             const item = document.createElement('div');
             item.className = 'history-item active';
             item.dataset.id = convId;
-            item.innerHTML = `
-                <i class="fa-regular fa-message"></i>
-                <span class="history-title">${title}</span>
-                <button class="history-delete" data-id="${convId}" title="Delete">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-            `;
+
+            const icon = document.createElement('i');
+            icon.className = 'fa-regular fa-message';
+
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'history-title';
+            titleSpan.textContent = title; // safe — no innerHTML
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'history-delete';
+            deleteBtn.dataset.id = convId;
+            deleteBtn.title = 'Delete';
+            deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+
+            item.appendChild(icon);
+            item.appendChild(titleSpan);
+            item.appendChild(deleteBtn);
             historyList.prepend(item);
         }
 
@@ -378,6 +432,7 @@
 
         } catch (err) {
             console.error('Load error:', err);
+            showToast('Failed to load conversation. Please try again.');
         }
     }
 
@@ -460,6 +515,7 @@
             }
         } catch (err) {
             console.error('Delete error:', err);
+            showToast('Failed to delete conversation. Please try again.');
         }
     }
 

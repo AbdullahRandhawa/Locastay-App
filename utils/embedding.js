@@ -1,8 +1,4 @@
-const OpenAI = require('openai');
-const openai = new OpenAI({
-    apiKey: process.env.OPENROUTER_API_KEY,
-    baseURL: 'https://openrouter.ai/api/v1'
-});
+const openai = require('./openai');
 
 const EMBED_MODEL = process.env.OPENROUTER_EMBED_MODEL || 'nvidia/llama-nemotron-embed-vl-1b-v2:free';
 
@@ -29,9 +25,8 @@ async function generateEmbedding(text, inputType = 'passage') {
         throw new Error("No embedding returned from API.");
     } catch (err) {
         console.error(`Error generating embedding (${inputType}):`, err.message);
-        console.warn('⚠️ API limit hit or error occurred. Generating 2048-dimension mock vector for testing...');
-        // Generate an array of 2048 random floats between -1 and 1
-        return Array.from({ length: 2048 }, () => (Math.random() * 2) - 1);
+        // Return null so the caller skips vector search rather than using bad data
+        return null;
     }
 }
 

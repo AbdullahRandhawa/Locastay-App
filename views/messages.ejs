@@ -1,0 +1,32 @@
+<% layout("/layouts/boilerplate") %>
+<style>
+  /* Lock the entire body from scrolling */
+  body {
+      overflow: hidden !important;
+  }
+
+  /* Override the main container's spacing so it perfectly snaps below the navbar */
+  .container.flex-grow-1.my-4 {
+      margin: 0 !important;
+      padding: 0 !important;
+      max-width: 100% !important;
+      height: calc(100vh - 67px) !important;
+  }
+
+  .messenger-iframe {
+      width: 100vw;
+      height: calc(100vh - 67px);
+      border: none;
+      display: block;
+  }
+  
+  /* Hide the footer permanently */
+  footer { display: none !important; }
+</style>
+
+<iframe 
+  src="http://localhost:5173/?fbToken=<%= fbToken %><%= receiverId ? '&receiverId=' + receiverId : '' %>" 
+  class="messenger-iframe" 
+  title="LocaStay Messenger"
+  allow="microphone; camera"
+></iframe>

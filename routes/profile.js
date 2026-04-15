@@ -23,7 +23,7 @@ router.get('/edit', isLoggedIn, asyncWrap(profileController.renderProfileEditFor
 // Edit Profile  Route
 router.put('/', isLoggedIn, upload.single('profile[profileImg]'), asyncWrap(profileController.editProfile));
 
-
-
+// Delete Account Route
+router.delete('/delete-account', isLoggedIn, asyncWrap(profileController.deleteAccount));
 
 module.exports = router;

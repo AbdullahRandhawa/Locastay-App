@@ -1,5 +1,7 @@
 const admin = require("firebase-admin");
 const fs = require("fs");
+const dns = require("node:dns");
+dns.setDefaultResultOrder('ipv4first'); // FIXES Node 20/22 IPv6 fetch errors with Google APIs
 
 let serviceAccount;
 

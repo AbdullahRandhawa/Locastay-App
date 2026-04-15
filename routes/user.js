@@ -1,31 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const asyncWrap = require('../utils/asyncWrap');
-const passport = require('passport')
 const userController = require('../controllers/users');
-const { isLoggedIn, isOwner } = require('../utils/middleware');
 
-
-
-
-// Signup Rputes
+// Signup Routes
 router.route('/signup')
     .get(userController.renderSignupForm)
-    .post(asyncWrap(userController.createSignup))
+    .post(asyncWrap(userController.createSignup));
 
-
-// Login routes
+// Login Routes
 router.route('/login')
     .get(asyncWrap(userController.renderloginForm))
-    .post(passport.authenticate("local", { failureRedirect: "/login", failureFlash: true, keepSessionInfo: true }), userController.login);
+    .post(asyncWrap(userController.login));
 
+router.post('/login/resolve-email', asyncWrap(userController.resolveEmail));
 
-
-// Logout route
-router.get('/logout', userController.logout);
-
-
-
-
+// Logout Route
+router.get('/logout', asyncWrap(userController.logout));
 
 module.exports = router;

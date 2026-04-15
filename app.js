@@ -25,9 +25,6 @@ const userRoute = require('./routes/user.js');
 const profileRoute = require('./routes/profile.js');
 const agentRoute = require('./routes/agent.js');
 
-const passport = require("passport");
-
-const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
 const asyncWrap = require("./utils/asyncWrap.js");
 
@@ -93,16 +90,28 @@ app.use(express.json());
 app.use(cookieParser('secretkay'));
 app.use(session(sessionOpentions));
 app.use(flash());
-app.use(passport.initialize());
-app.use(passport.session());
-
-passport.use(new LocalStrategy(User.authenticate()));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
 
 
+
+const { admin } = require('./firebaseAdmin');
 
 app.use(async (req, res, next) => {
+    // 🔥 NEW: Global Firebase Session Check
+    const sessionCookie = req.cookies.__session || '';
+    req.user = null; // Default to null
+    
+    if (sessionCookie) {
+        try {
+            const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
+            const user = await User.findOne({ firebaseUid: decodedClaims.uid });
+            if (user) {
+                req.user = user;
+            }
+        } catch (err) {
+            // Silently ignore expired/invalid cookies on public routes
+        }
+    }
+
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
     res.locals.currUser = req.user;
@@ -134,7 +143,8 @@ app.get('/messages', isLoggedIn, async (req, res) => {
     try {
         const { admin } = require('./firebaseAdmin');
         const receiverId = req.query.receiverId || '';
-        const firebaseToken = await admin.auth().createCustomToken(req.user._id.toString());
+        // Use firebaseUid (not Mongo _id) since we are now using Firebase Auth natively
+        const firebaseToken = await admin.auth().createCustomToken(req.user.firebaseUid);
         res.render('messages.ejs', { receiverId, fbToken: firebaseToken, hideFooter: true });
     } catch (err) {
         console.error("Error generating token for messages iframe:", err);

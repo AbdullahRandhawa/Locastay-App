@@ -195,7 +195,7 @@
           </div>
         </div>
       </div>
-      <% if(currUser && currUser._id.equals(idListing.owner._id)) { %>
+      <% if(currUser && (currUser._id.equals(idListing.owner._id) || currUser.role === 'admin')) { %>
         <div class="col-10 col-lg-8 col-md-10  offset-1 offset-lg-2 offset-md-1">
           <div class="row">
             <div class="col-3">
@@ -246,7 +246,7 @@
                         <div class="card p-2">
                           <div class="card-body">
                             <h5 class="card-title">
-                              <%= review.author.username %>
+                              <%= review.author ? review.author.username : 'Anonymous User' %>
                             </h5>
                             <p class="card-text starability-result" data-rating="<%= review.rating %>">
                             </p>
@@ -257,7 +257,8 @@
                             <form method="POST"
                               action="/listings/<%= idListing._id %>/reviews/<%= review._id %>?_method=DELETE">
                               <% if(currUser && (currUser._id.equals(idListing.owner._id) ||
-                                currUser._id.equals(review.author._id))) { %>
+                                (review.author && currUser._id.equals(review.author._id)) ||
+                                currUser.role === 'admin')) { %>
                                 <button class="btn btn-sm btn-dark">Delete</button>
                                 <% } %>
                             </form>

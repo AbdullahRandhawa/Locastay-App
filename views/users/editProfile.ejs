@@ -59,6 +59,22 @@
                     <button class="btn btn-dark custom-btn">Save Profile</button>
                     <br><br><br>
                 </form>
+
+                <hr class="my-5">
+
+                <div class="card border-danger mb-5 p-4">
+                    <div class="card-body p-4">
+                        <h4 class="card-title text-danger fw-semibold mb-3">Delete Account</h4>
+                        <p class="card-text text-muted mb-4">
+                            Permanently delete your Rentlyst and Nocap-chat account. This action is irreversible and
+                            will delete your profile, listings, and chat histories permanently.
+                        </p>
+                        <form class="text-end" method="POST" action="/profile/delete-account?_method=DELETE"
+                            onsubmit="return confirm('WARNING: Are you absolutely sure? This will delete all your listings, reviews, messages, and profile permanently. This action cannot be undone.');">
+                            <button class="btn btn-outline-danger custom-btn">Delete My Account</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </body>

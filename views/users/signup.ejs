@@ -2,27 +2,91 @@
 
     <body>
         <div class="row">
-            <div class="col-6 col-lg-6 col-md-8 col-sm-10 offset-3 offset-lg-3 offset-md-2  offset-sm-1">
-                <h4 class="">Signup on Rentlyst</h4>
-                <form method="Post" action="/signup" class="needs-validation" novalidate>
+            <div class="col-6 col-lg-6 col-md-8 col-sm-10 offset-3 offset-lg-3 offset-md-2 offset-sm-1">
+                <h4>Signup on Rentlyst</h4>
+                <div id="signup-error" class="alert alert-danger d-none" role="alert"></div>
+
+                <form id="signup-form" class="needs-validation" novalidate>
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
                         <input type="text" name="username" id="username" class="form-control" required>
                     </div>
-
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" name="email" id="email" class="form-control" required>
-
                     </div>
-
                     <div class="mb-3">
-                        <label for="password" class="form-label">Passward</label>
-                        <input type="password" name="password" id="password" class="form-control" required>
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" name="password" id="password" class="form-control" required minlength="6">
                     </div>
-
-                    <button class="btn btn-danger">SignUp</button>
+                    <button id="signup-btn" class="btn btn-danger">Sign Up</button>
                 </form>
             </div>
         </div>
+
+        <!-- Firebase SDK (using the same project as Nocap-chat) -->
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+            import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyAHbmJHkxi8nOTjUjDTiuXQUW_K000VsCg",
+                authDomain: "nocap-chat.firebaseapp.com",
+                projectId: "nocap-chat",
+                storageBucket: "nocap-chat.firebasestorage.app",
+                messagingSenderId: "93908764336",
+                appId: "1:93908764336:web:ae9b29ee7973d91a02dd75"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+
+            document.getElementById('signup-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('signup-btn');
+                const errorBox = document.getElementById('signup-error');
+                errorBox.classList.add('d-none');
+
+                const username = document.getElementById('username').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+
+                if (!username || !email || !password) return;
+
+                btn.disabled = true;
+                btn.textContent = 'Creating Account...';
+
+                try {
+                    // Step 1: Create the account in Firebase Auth
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+                    // Step 2: Get the ID token to prove identity to our Express backend
+                    const idToken = await userCredential.user.getIdToken();
+
+                    // Step 3: Send the secure token + username to our backend
+                    const res = await fetch('/signup', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idToken, username }),
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        // Signup failed on the backend (e.g. duplicate username)
+                        // Firebase account was also deleted on backend side
+                        throw new Error(data.error || 'Signup failed. Please try again.');
+                    }
+
+                    // Step 4: Redirect to listings
+                    window.location.href = data.redirect;
+
+                } catch (err) {
+                    errorBox.textContent = err.message;
+                    errorBox.classList.remove('d-none');
+                    btn.disabled = false;
+                    btn.textContent = 'Sign Up';
+                }
+            });
+        </script>
     </body>

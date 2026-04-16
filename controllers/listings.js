@@ -19,15 +19,21 @@ function buildSearchContext(listing) {
     if (listing.title) parts.push(`Title: ${listing.title}`);
 
     // Quality & Price
-    if (listing.conditionGrade != null) parts.push(`Condition: ${listing.conditionGrade}/10`);
-    if (listing.price != null) parts.push(`Price: ${listing.price} ${listing.rentalPeriod !== 'N/A' ? 'per ' + listing.rentalPeriod : ''}`);
+    if (listing.mainCategory !== 'Service' && listing.conditionGrade != null) {
+        parts.push(`Condition: ${listing.conditionGrade}/10`);
+    }
+    if (listing.price != null) {
+        const period = listing.rentalPeriod;
+        const periodLabel = period && period !== 'N/A' && period !== 'flat'
+            ? ` per ${period}`
+            : period === 'flat' ? ' (flat/quoted price)' : '';
+        parts.push(`Price: ${listing.price}${periodLabel}`);
+    }
 
     // Location
     if (listing.city) parts.push(`City: ${listing.city}`);
     if (listing.country) parts.push(`Country: ${listing.country}`);
     if (listing.address) parts.push(`Address: ${listing.address}`);
-
-
 
     // Specifications
     if (listing.specifications) {
@@ -40,9 +46,9 @@ function buildSearchContext(listing) {
         if (specs.bathrooms != null) parts.push(`Bathrooms: ${specs.bathrooms}`);
         if (specs.brand) parts.push(`Brand: ${specs.brand}`);
         if (specs.experience) parts.push(`Experience: ${specs.experience}`);
+        if (specs.serviceLocation) parts.push(`Service Location: ${specs.serviceLocation}`);
+        if (specs.portfolioLink) parts.push(`Portfolio: ${specs.portfolioLink}`);
     }
-
-
 
     // Description (last, truncated)
     if (listing.description) {

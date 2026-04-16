@@ -1,4 +1,5 @@
 <% layout("/layouts/boilerplate") %>
+  <link rel="stylesheet" href="/css/form.css" />
 
   <body>
     <div class="row">
@@ -31,22 +32,24 @@
             </div>
 
             <!-- Listing Type Cards -->
-            <label class="form-label fw-semibold mb-3 text-dark">Listing Type</label>
-            <div class="row g-3 mb-5 pb-3">
-              <div class="col-6">
-                <input type="radio" name="listing[listingType]" id="type-Sale" value="Sale" class="d-none type-radio"
-                  checked required>
-                <label for="type-Sale" class="cat-card">
-                  <i class="fa-solid fa-tag"></i>
-                  <span>For Sale</span>
-                </label>
-              </div>
-              <div class="col-6">
-                <input type="radio" name="listing[listingType]" id="type-Rent" value="Rent" class="d-none type-radio">
-                <label for="type-Rent" class="cat-card">
-                  <i class="fa-solid fa-clock"></i>
-                  <span>For Rent</span>
-                </label>
+            <div id="listingTypeSectionWrapper">
+              <label class="form-label fw-semibold mb-3 text-dark">Listing Type</label>
+              <div class="row g-3 mb-5 pb-3">
+                <div class="col-6">
+                  <input type="radio" name="listing[listingType]" id="type-Sale" value="Sale" class="d-none type-radio"
+                    checked required>
+                  <label for="type-Sale" class="cat-card">
+                    <i class="fa-solid fa-tag"></i>
+                    <span>For Sale</span>
+                  </label>
+                </div>
+                <div class="col-6">
+                  <input type="radio" name="listing[listingType]" id="type-Rent" value="Rent" class="d-none type-radio">
+                  <label for="type-Rent" class="cat-card">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>For Rent</span>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -89,17 +92,10 @@
                 </div>
                 <div class="invalid-feedback">Please select a sub category</div>
               </div>
-              <div class="col-md-6 d-none" id="rentalPeriodGroup">
-                <label for="rentalPeriod" class="form-label fw-semibold">Rental Period</label>
-                <div class="select-wrapper">
-                  <select name="listing[rentalPeriod]" id="rentalPeriod" class="form-select form-input custom-select">
-                    <option value="N/A" selected>Not Applicable</option>
-                    <option value="hour">Per Hour</option>
-                    <option value="day">Per Day</option>
-                    <option value="week">Per Week</option>
-                    <option value="month">Per Month</option>
-                  </select>
-                </div>
+              <div class="col-md-6 d-none" id="portfolioGroup">
+                <label for="portfolioLink" class="form-label fw-semibold">Portfolio / Website Link</label>
+                <input type="url" name="listing[specifications][portfolioLink]" placeholder="e.g. https://mywork.com"
+                  class="form-control form-input" id="portfolioLink" disabled>
               </div>
             </div>
 
@@ -122,7 +118,7 @@
               </div>
             </div>
             <div class="specs-group d-none" id="specsProperty">
-              <label class="form-label fw-semibold text-primary mb-3">Property Details</label>
+              <label class="form-label fw-semibold mb-3">Property Details</label>
               <div class="row mb-5">
                 <div class="col-md-4 mb-4 mb-md-0">
                   <input type="text" name="listing[specifications][area]" placeholder="Area (e.g. 5 Marla)"
@@ -152,10 +148,21 @@
               </div>
             </div>
             <div class="specs-group d-none" id="specsService">
-              <label class="form-label fw-semibold text-primary mb-3">Service Details</label>
-              <div class="mb-5">
-                <input type="text" name="listing[specifications][experience]" placeholder="Experience (e.g. 5 years)"
-                  class="form-control form-input" disabled>
+              <label class="form-label fw-semibold  mb-3">Service Details</label>
+              <div class="row mb-5">
+                <div class="col-md-6 mb-4 mb-md-0">
+                  <input type="text" name="listing[specifications][experience]" placeholder="Experience (e.g. 5 years)"
+                    class="form-control form-input" disabled>
+                </div>
+                <div class="col-md-6">
+                  <select name="listing[specifications][serviceLocation]" class="form-select form-input custom-select"
+                    disabled>
+                    <option value="" disabled selected>Service Location...</option>
+                    <option value="Online">Remote / Online</option>
+                    <option value="On-site">On-site</option>
+                    <option value="On-site & Online">On-site & Online</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -166,21 +173,37 @@
                 <div class="input-group">
                   <span class="input-group-text ig-custom">&#8360;</span>
                   <input type="number" name="listing[price]" placeholder="0"
-                    class="form-control form-input border-start-0 border-end-0" id="price" min="0" required
-                    style="border-radius: 0;" />
-                  <span class="input-group-text ig-custom" id="priceSuffix"></span>
+                    class="form-control form-input border-start-0" id="price" min="0" required />
                 </div>
                 <div class="invalid-feedback">Price should be valid!</div>
               </div>
-              <div class="col-md-6">
+              <div class="col-md-6 mb-5 mb-md-0 d-none" id="rentalPeriodGroup">
+                <label for="rentalPeriod" id="rentalPeriodLabel" class="form-label fw-semibold">Rental Period</label>
+                <div class="select-wrapper">
+                  <select name="listing[rentalPeriod]" id="rentalPeriod" class="form-select form-input custom-select">
+                    <option value="N/A" selected>Not Applicable</option>
+                    <option value="hour">Per Hour</option>
+                    <option value="day">Per Day</option>
+                    <option value="week">Per Week</option>
+                    <option value="month">Per Month</option>
+                    <option value="flat">Flat / Quoted Price</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Condition -->
+            <div class="row mb-5" id="conditionGroupWrapper">
+              <div class="col-md-6" id="conditionGroup">
                 <label for="conditionGrade" class="form-label fw-semibold">Condition: <span
-                    id="conditionValue">5</span>/10</label>
-                <input type="range" name="listing[conditionGrade]" class="form-range mt-3" id="conditionGrade" min="1"
-                  max="10" value="5">
+                    id="conditionValue">—</span>/10</label>
+                <input type="range" id="conditionGrade" class="form-range mt-3" min="1" max="10" value="5">
+                <input type="hidden" name="listing[conditionGrade]" id="conditionGradeHidden">
                 <div class="d-flex justify-content-between">
                   <small class="fw-bold text-muted">Poor</small>
                   <small class="fw-bold text-muted">Excellent</small>
                 </div>
+                <small class="text-muted">Move the slider to set a condition rating</small>
               </div>
             </div>
 
@@ -222,189 +245,91 @@
         </form>
       </div>
     </div>
-  </body>
+    <script id="categoriesData" type="application/json"><%- JSON.stringify(CATEGORIES) %></script>
+    <script>
+      const CATEGORIES = JSON.parse(document.getElementById('categoriesData').textContent);
 
-  <style>
-    /* Category / Type Selection Cards */
-    .cat-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.8rem;
-      padding: 1.6rem 0.75rem;
-      border: 2px solid var(--bg-tertiary);
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      background: var(--bg-main);
-      text-align: center;
-      min-height: 120px;
-    }
+      const step1 = document.getElementById('step1');
+      const step2 = document.getElementById('step2');
+      const nextBtn = document.getElementById('nextBtn');
+      const backBtn = document.getElementById('backBtn');
+      const subCatSelect = document.getElementById('subCategory');
+      const rentalGroup = document.getElementById('rentalPeriodGroup');
+      const rentalSelect = document.getElementById('rentalPeriod');
+      const condSlider = document.getElementById('conditionGrade');
+      const condValue = document.getElementById('conditionValue');
 
-    .cat-card i {
-      font-size: 1.8rem;
-      color: var(--text-light);
-      /* Lighter unselected color */
-      transition: color var(--transition-fast);
-    }
+      let selectedCat = null;
 
-    .cat-card span {
-      font-weight: 600;
-      font-size: 1rem;
-      color: var(--text-muted);
-    }
-
-    .cat-card:hover {
-      border-color: #999;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .cat-card:hover i {
-      color: #666;
-    }
-
-    .cat-radio:checked+.cat-card,
-    .type-radio:checked+.cat-card {
-      border-color: var(--primary) !important;
-      background: rgba(255, 56, 92, 0.04);
-      box-shadow: 0 0 0 1px var(--primary);
-    }
-
-    .cat-radio:checked+.cat-card i,
-    .type-radio:checked+.cat-card i {
-      color: var(--primary) !important;
-    }
-
-    .cat-radio:checked+.cat-card span,
-    .type-radio:checked+.cat-card span {
-      color: #111;
-    }
-
-    /* Darker input / select borders */
-    .form-input {
-      border: 2px solid #919191 !important;
-      padding: 0.8rem 1.2rem;
-      font-size: 1.05rem;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-      color: #222;
-    }
-
-    .form-input:focus {
-      border-color: var(--primary) !important;
-      box-shadow: 0 0 0 4px rgba(255, 56, 92, 0.1) !important;
-      outline: none;
-    }
-
-    .form-input::placeholder {
-      color: #999;
-    }
-
-    /* File Input Specific */
-    .form-input-file {
-      padding: 0.6rem 1rem;
-    }
-
-    /* Modern Dropdown SVG and container */
-    .select-wrapper {
-      position: relative;
-    }
-
-    .custom-select {
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      background-color: #fff;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 1.2rem center;
-      background-size: 1.2rem;
-      padding-right: 3rem !important;
-      cursor: pointer;
-    }
-
-    .custom-select:hover {
-      border-color: #333 !important;
-    }
-
-    /* Input Group Styling for Price */
-    .ig-custom {
-      border: 2px solid #555;
-      background: var(--bg-secondary);
-      font-weight: 700;
-      color: #333;
-      font-size: 1.1rem;
-      padding: 0 1.2rem;
-    }
-  </style>
-
-  <script id="categoriesData" type="application/json"><%- JSON.stringify(CATEGORIES) %></script>
-  <script>
-    const CATEGORIES = JSON.parse(document.getElementById('categoriesData').textContent);
-
-    const step1 = document.getElementById('step1');
-    const step2 = document.getElementById('step2');
-    const nextBtn = document.getElementById('nextBtn');
-    const backBtn = document.getElementById('backBtn');
-    const subCatSelect = document.getElementById('subCategory');
-    const rentalGroup = document.getElementById('rentalPeriodGroup');
-    const rentalSelect = document.getElementById('rentalPeriod');
-    const priceSuffix = document.getElementById('priceSuffix');
-    const condSlider = document.getElementById('conditionGrade');
-    const condValue = document.getElementById('conditionValue');
-
-    let selectedCat = null;
-
-    // Category selection — enable Next button
-    document.querySelectorAll('.cat-radio').forEach(r => {
-      r.addEventListener('change', () => { selectedCat = r.value; nextBtn.disabled = false; });
-    });
-
-    // Listing type toggle — rental period
-    document.querySelectorAll('.type-radio').forEach(r => {
-      r.addEventListener('change', () => {
-        if (r.value === 'Rent') { rentalGroup.classList.remove('d-none'); rentalSelect.value = 'month'; }
-        else { rentalGroup.classList.add('d-none'); rentalSelect.value = 'N/A'; }
-        updatePriceSuffix();
+      // Category selection — enable Next button and trigger form logic
+      document.querySelectorAll('.cat-radio').forEach(r => {
+        r.addEventListener('change', () => {
+          selectedCat = r.value;
+          nextBtn.disabled = false;
+          updateDynamicFields(selectedCat);
+        });
       });
-    });
 
-    // Step navigation
-    nextBtn.addEventListener('click', () => {
-      step1.classList.add('d-none');
-      step2.classList.remove('d-none');
-      // Populate subcategories
-      const subs = CATEGORIES[selectedCat] || [];
-      subCatSelect.innerHTML = '<option value="" disabled selected>Select sub category...</option>';
-      subs.forEach(sub => { const o = document.createElement('option'); o.value = sub; o.textContent = sub; subCatSelect.appendChild(o); });
-      updateSpecs(selectedCat);
-      updatePriceSuffix();
-    });
+      // Listing type toggle — rental period
+      document.querySelectorAll('.type-radio').forEach(r => {
+        r.addEventListener('change', () => {
+          if (r.value === 'Rent') { rentalGroup.classList.remove('d-none'); rentalSelect.value = 'month'; }
+          else { rentalGroup.classList.add('d-none'); rentalSelect.value = 'N/A'; }
+        });
+      });
 
-    backBtn.addEventListener('click', () => { step2.classList.add('d-none'); step1.classList.remove('d-none'); });
+      function updateDynamicFields(cat) {
+        const listingTypeSection = document.getElementById('listingTypeSectionWrapper');
+        const conditionSection = document.getElementById('conditionGroupWrapper');
+        const rentalLabel = document.getElementById('rentalPeriodLabel');
+        const portfolioGroup = document.getElementById('portfolioGroup');
+        const portfolioLink = document.getElementById('portfolioLink');
 
-    // Price suffix
-    rentalSelect.addEventListener('change', updatePriceSuffix);
-    function updatePriceSuffix() {
-      const t = document.querySelector('.type-radio:checked');
-      const p = rentalSelect.value;
-      if (!t || t.value === 'Sale' || p === 'N/A') {
-        priceSuffix.textContent = '';
-        priceSuffix.classList.add('d-none');
-      } else {
-        priceSuffix.textContent = '/ ' + p;
-        priceSuffix.classList.remove('d-none');
+        if (cat === 'Service') {
+          if (listingTypeSection) {
+            listingTypeSection.classList.add('d-none');
+          }
+          if (conditionSection) conditionSection.classList.add('d-none');
+          if (rentalLabel) rentalLabel.textContent = 'Pricing Model';
+          document.getElementById('type-Rent').click(); // Force the type-Rent radio
+
+          if (portfolioGroup) portfolioGroup.classList.remove('d-none');
+          if (portfolioLink) portfolioLink.disabled = false;
+        } else {
+          if (listingTypeSection) {
+            listingTypeSection.classList.remove('d-none');
+          }
+          if (conditionSection) conditionSection.classList.remove('d-none');
+          if (rentalLabel) rentalLabel.textContent = 'Rental Period';
+
+          if (portfolioGroup) portfolioGroup.classList.add('d-none');
+          if (portfolioLink) portfolioLink.disabled = true;
+        }
       }
-    }
 
-    // Condition slider
-    condSlider.addEventListener('input', () => { condValue.textContent = condSlider.value; });
+      // Step navigation
+      nextBtn.addEventListener('click', () => {
+        step1.classList.add('d-none');
+        step2.classList.remove('d-none');
+        // Populate subcategories
+        const subs = CATEGORIES[selectedCat] || [];
+        subCatSelect.innerHTML = '<option value="" disabled selected>Select sub category...</option>';
+        subs.forEach(sub => { const o = document.createElement('option'); o.value = sub; o.textContent = sub; subCatSelect.appendChild(o); });
+        updateSpecs(selectedCat);
+      });
 
-    // Specs: disable hidden, enable visible
-    function updateSpecs(cat) {
-      document.querySelectorAll('.specs-group').forEach(g => { g.classList.add('d-none'); g.querySelectorAll('input').forEach(i => i.disabled = true); });
-      const m = { 'Vehicle': 'specsVehicle', 'Property': 'specsProperty', 'Item': 'specsItem', 'Service': 'specsService' };
-      if (m[cat]) { const el = document.getElementById(m[cat]); el.classList.remove('d-none'); el.querySelectorAll('input').forEach(i => i.disabled = false); }
-    }
-  </script>
+      backBtn.addEventListener('click', () => { step2.classList.add('d-none'); step1.classList.remove('d-none'); });
+
+      // Condition slider — only submits if user moves it
+      condSlider.addEventListener('input', () => {
+        condValue.textContent = condSlider.value;
+        document.getElementById('conditionGradeHidden').value = condSlider.value;
+      });
+
+      // Specs: disable hidden, enable visible
+      function updateSpecs(cat) {
+        document.querySelectorAll('.specs-group').forEach(g => { g.classList.add('d-none'); g.querySelectorAll('input, select').forEach(i => i.disabled = true); });
+        const m = { 'Vehicle': 'specsVehicle', 'Property': 'specsProperty', 'Item': 'specsItem', 'Service': 'specsService' };
+        if (m[cat]) { const el = document.getElementById(m[cat]); el.classList.remove('d-none'); el.querySelectorAll('input, select').forEach(i => i.disabled = false); }
+      }
+    </script>

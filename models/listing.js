@@ -62,7 +62,7 @@ const listingSchema = new Schema({
     },
     rentalPeriod: {
         type: String,
-        enum: ['hour', 'day', 'week', 'month', 'N/A'],
+        enum: ['hour', 'day', 'week', 'month', 'flat', 'N/A'],
         default: 'N/A'
     },
     conditionGrade: {
@@ -80,7 +80,12 @@ const listingSchema = new Schema({
         bedrooms: Number,
         bathrooms: Number,
         brand: String,
-        experience: String
+        experience: String,
+        portfolioLink: String,
+        serviceLocation: {
+            type: String,
+            enum: ['Online', 'On-site', 'On-site & Online']
+        }
     },
 
 

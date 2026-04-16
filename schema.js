@@ -21,8 +21,8 @@ module.exports.listingSchema = joi.object({
 
         // Rental & Condition
         listingType: joi.string().required().valid('Sale', 'Rent'),
-        rentalPeriod: joi.string().valid('hour', 'day', 'week', 'month', 'N/A').required(),
-        conditionGrade: joi.number().min(1).max(10).required(),
+        rentalPeriod: joi.string().valid('hour', 'day', 'week', 'month', 'flat', 'N/A').required(),
+        conditionGrade: joi.number().min(1).max(10).optional(),
 
         // Dynamic Specifications (Optional because they vary by category)
         specifications: joi.object({
@@ -33,7 +33,9 @@ module.exports.listingSchema = joi.object({
             bedrooms: joi.number().integer().min(0).allow(null),
             bathrooms: joi.number().integer().min(0).allow(null),
             brand: joi.string().allow('', null),
-            experience: joi.string().allow('', null)
+            experience: joi.string().allow('', null),
+            portfolioLink: joi.string().uri().allow('', null),
+            serviceLocation: joi.string().valid('Online', 'On-site', 'On-site & Online').allow('', null)
         }).optional(),
 
         // Image validation is handled differently since Multer handles the upload,

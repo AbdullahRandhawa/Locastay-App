@@ -1,4 +1,5 @@
 <% layout("/layouts/boilerplate") %>
+    <link rel="stylesheet" href="/css/form.css" />
 
     <body>
         <div class="row">
@@ -24,32 +25,11 @@
                         </div>
                     </div>
 
-                    <!-- Sub Category -->
-                    <div class="mb-4">
-                        <label for="subCategory" class="form-label fw-semibold">Sub Category</label>
-                        <select name="listing[subCategory]" id="subCategory" class="form-select" required>
-                            <% if (listing.mainCategory && CATEGORIES[listing.mainCategory]) { %>
-                                <% CATEGORIES[listing.mainCategory].forEach(sub=> { %>
-                                    <option value="<%= sub %>" <%=listing.subCategory===sub ? 'selected' : '' %>><%= sub
-                                            %>
-                                    </option>
-                                    <% }) %>
-                                        <% } %>
-                        </select>
-                    </div>
-
                     <!-- Title -->
                     <div class="mb-4">
                         <label for="title" class="form-label fw-semibold">Title</label>
-                        <input type="text" name="listing[title]" value="<%= listing.title %>" class="form-control"
-                            maxlength="100" required>
-                    </div>
-
-                    <!-- Description -->
-                    <div class="mb-4">
-                        <label for="description" class="form-label fw-semibold">Description</label>
-                        <textarea name="listing[description]" class="form-control" rows="4"
-                            required><%= listing.description %></textarea>
+                        <input type="text" name="listing[title]" value="<%= listing.title %>"
+                            class="form-control form-input" maxlength="100" required>
                     </div>
 
                     <!-- Current Images -->
@@ -69,138 +49,208 @@
                         <input type="file" name="listing[image]" class="form-control" id="image" multiple>
                     </div>
 
-                    <br />
-
-                    <!-- Address -->
-                    <div class="mb-4">
-                        <label for="address" class="form-label fw-semibold">Address</label>
-                        <input type="text" name="listing[address]" value="<%= listing.address %>" class="form-control"
-                            required>
+                    <!-- Sub Category and Portfolio Link -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="subCategory" class="form-label fw-semibold">Sub Category</label>
+                            <div class="select-wrapper">
+                                <select name="listing[subCategory]" id="subCategory"
+                                    class="form-select form-input custom-select" required>
+                                    <% if (listing.mainCategory && CATEGORIES[listing.mainCategory]) { %>
+                                        <% CATEGORIES[listing.mainCategory].forEach(sub=> { %>
+                                            <option value="<%= sub %>" <%=listing.subCategory===sub ? 'selected' : '' %>
+                                                ><%= sub %>
+                                            </option>
+                                            <% }) %>
+                                                <% } %>
+                                </select>
+                            </div>
+                        </div>
+                        <% if (listing.mainCategory==='Service' ) { %>
+                            <div class="col-md-6">
+                                <label for="portfolioLink" class="form-label fw-semibold">Portfolio / Website
+                                    Link</label>
+                                <input type="url" name="listing[specifications][portfolioLink]"
+                                    value="<%= listing.specifications ? listing.specifications.portfolioLink || '' : '' %>"
+                                    placeholder="e.g. https://mywork.com" class="form-control form-input"
+                                    id="portfolioLink">
+                            </div>
+                            <% } %>
                     </div>
 
-                    <!-- City -->
-                    <div class="mb-4">
-                        <label for="city" class="form-label fw-semibold">City</label>
-                        <input type="text" name="listing[city]" value="<%= listing.city %>" class="form-control"
-                            required>
-                    </div>
+                    <!-- ============ CATEGORY-SPECIFIC SPECS ============ -->
 
+                    <% if (listing.mainCategory==='Vehicle' ) { %>
+                        <label class="form-label fw-semibold">Vehicle Details</label>
+                        <div class="row mb-4">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <input type="text" name="listing[specifications][make]"
+                                    value="<%= listing.specifications ? listing.specifications.make || '' : '' %>"
+                                    placeholder="Make" class="form-control form-input">
+                            </div>
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <input type="text" name="listing[specifications][model]"
+                                    value="<%= listing.specifications ? listing.specifications.model || '' : '' %>"
+                                    placeholder="Model" class="form-control form-input">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" name="listing[specifications][year]"
+                                    value="<%= listing.specifications ? listing.specifications.year || '' : '' %>"
+                                    placeholder="Year" class="form-control form-input" min="1900" max="2026">
+                            </div>
+                        </div>
+                        <% } else if (listing.mainCategory==='Property' ) { %>
+                            <label class="form-label fw-semibold">Property Details</label>
+                            <div class="row mb-4">
+                                <div class="col-md-4 mb-3 mb-md-0">
+                                    <input type="text" name="listing[specifications][area]"
+                                        value="<%= listing.specifications ? listing.specifications.area || '' : '' %>"
+                                        placeholder="Area" class="form-control form-input">
+                                </div>
+                                <div class="col-md-4 mb-3 mb-md-0">
+                                    <input type="number" name="listing[specifications][bedrooms]"
+                                        value="<%= listing.specifications ? listing.specifications.bedrooms || '' : '' %>"
+                                        placeholder="Bedrooms" class="form-control form-input" min="0">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" name="listing[specifications][bathrooms]"
+                                        value="<%= listing.specifications ? listing.specifications.bathrooms || '' : '' %>"
+                                        placeholder="Bathrooms" class="form-control form-input" min="0">
+                                </div>
+                            </div>
+                            <% } else if (listing.mainCategory==='Item' ) { %>
+                                <label class="form-label fw-semibold">Item Details</label>
+                                <div class="row mb-4">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <input type="text" name="listing[specifications][brand]"
+                                            value="<%= listing.specifications ? listing.specifications.brand || '' : '' %>"
+                                            placeholder="Brand" class="form-control form-input">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" name="listing[specifications][model]"
+                                            value="<%= listing.specifications ? listing.specifications.model || '' : '' %>"
+                                            placeholder="Model" class="form-control form-input">
+                                    </div>
+                                </div>
+                                <% } else if (listing.mainCategory==='Service' ) { %>
+                                    <label class="form-label fw-semibold ">Service Details</label>
+                                    <div class="row mb-4">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <input type="text" name="listing[specifications][experience]"
+                                                value="<%= listing.specifications ? listing.specifications.experience || '' : '' %>"
+                                                placeholder="Experience (e.g. 5 years)" class="form-control form-input">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="select-wrapper">
+                                                <select name="listing[specifications][serviceLocation]"
+                                                    class="form-select form-input custom-select">
+                                                    <option value="" disabled <%=!listing.specifications ||
+                                                        !listing.specifications.serviceLocation ? 'selected' : '' %>
+                                                        >Service Location...</option>
+                                                    <option value="Online" <%=listing.specifications &&
+                                                        listing.specifications.serviceLocation==='Online' ? 'selected'
+                                                        : '' %>>Remote / Online</option>
+                                                    <option value="On-site" <%=listing.specifications &&
+                                                        listing.specifications.serviceLocation==='On-site' ? 'selected'
+                                                        : '' %>>On-site</option>
+                                                    <option value="On-site & Online" <%=listing.specifications &&
+                                                        listing.specifications.serviceLocation==='On-site & Online'
+                                                        ? 'selected' : '' %>>On-site & Online</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <% } %>
+
+                    <!-- Price + Rental Period -->
                     <div class="row mb-4">
                         <!-- Price -->
                         <div class="col-md-4 mb-3 mb-md-0">
                             <label for="price" class="form-label fw-semibold">Price</label>
                             <div class="input-group">
-                                <span class="input-group-text">&#8360;</span>
+                                <span class="input-group-text ig-custom">&#8360;</span>
                                 <input type="number" name="listing[price]" value="<%= listing.price %>"
-                                    class="form-control" min="0" required>
-                                <span class="input-group-text" id="priceSuffix"></span>
+                                    class="form-control form-input border-start-0" min="0" required>
                             </div>
                         </div>
 
-                        <!-- Country -->
-                        <div class="col-md-4 mb-3 mb-md-0">
+                        <!-- Rental Period / Pricing Model -->
+                        <% if (listing.listingType==='Rent' || listing.mainCategory==='Service' ) { %>
+                            <div class="col-md-4 mb-3 mb-md-0" id="rentalPeriodGroup">
+                                <label for="rentalPeriod" class="form-label fw-semibold">
+                                    <%= listing.mainCategory==='Service' ? 'Pricing Model' : 'Rental Period' %>
+                                </label>
+                                <div class="select-wrapper">
+                                    <select name="listing[rentalPeriod]" id="rentalPeriod"
+                                        class="form-select form-input custom-select">
+                                        <option value="N/A" <%=listing.rentalPeriod==='N/A' ? 'selected' : '' %>>Not
+                                            Applicable
+                                        </option>
+                                        <option value="hour" <%=listing.rentalPeriod==='hour' ? 'selected' : '' %>>Per
+                                            Hour
+                                        </option>
+                                        <option value="day" <%=listing.rentalPeriod==='day' ? 'selected' : '' %>>Per Day
+                                        </option>
+                                        <option value="week" <%=listing.rentalPeriod==='week' ? 'selected' : '' %>>Per
+                                            Week
+                                        </option>
+                                        <option value="month" <%=listing.rentalPeriod==='month' ? 'selected' : '' %>>Per
+                                            Month
+                                        </option>
+                                        <option value="flat" <%=listing.rentalPeriod==='flat' ? 'selected' : '' %>>Flat
+                                            / Quoted Price
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <% } else { %>
+                                <input type="hidden" name="listing[rentalPeriod]" value="N/A">
+                                <% } %>
+                    </div>
+
+                    <!-- Condition Grade (Hide completely if Service) -->
+                    <div class="row mb-4">
+                        <% if (listing.mainCategory !=='Service' ) { %>
+                            <div class="col-md-6">
+                                <label for="conditionGrade" class="form-label fw-semibold">Condition: <span
+                                        id="conditionValue">
+                                        <%= listing.conditionGrade || 5 %>
+                                    </span>/10</label>
+                                <input type="range" name="listing[conditionGrade]" class="form-range mt-2"
+                                    id="conditionGrade" min="1" max="10" value="<%= listing.conditionGrade || 5 %>">
+                            </div>
+                            <% } %>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="mb-4">
+                        <label for="address" class="form-label fw-semibold">Address</label>
+                        <input type="text" name="listing[address]" value="<%= listing.address %>"
+                            class="form-control form-input" required>
+                    </div>
+
+                    <!-- City & Country -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="city" class="form-label fw-semibold">City</label>
+                            <input type="text" name="listing[city]" value="<%= listing.city %>"
+                                class="form-control form-input" required>
+                        </div>
+                        <div class="col-md-6">
                             <label for="country" class="form-label fw-semibold">Country</label>
                             <input type="text" name="listing[country]" value="<%= listing.country %>"
-                                class="form-control" required>
-                        </div>
-
-                        <!-- Condition Grade -->
-                        <div class="col-md-4">
-                            <label for="conditionGrade" class="form-label fw-semibold">Condition: <span
-                                    id="conditionValue">
-                                    <%= listing.conditionGrade || 5 %>
-                                </span>/10</label>
-                            <input type="range" name="listing[conditionGrade]" class="form-range mt-2"
-                                id="conditionGrade" min="1" max="10" value="<%= listing.conditionGrade || 5 %>">
+                                class="form-control form-input" required>
                         </div>
                     </div>
 
-                    <!-- Rental Period (only if Rent) -->
-                    <% if (listing.listingType==='Rent' ) { %>
-                        <div class="mb-4" id="rentalPeriodGroup">
-                            <label for="rentalPeriod" class="form-label fw-semibold">Rental Period</label>
-                            <select name="listing[rentalPeriod]" id="rentalPeriod" class="form-select">
-                                <option value="N/A" <%=listing.rentalPeriod==='N/A' ? 'selected' : '' %>>Not Applicable
-                                </option>
-                                <option value="hour" <%=listing.rentalPeriod==='hour' ? 'selected' : '' %>>Per Hour
-                                </option>
-                                <option value="day" <%=listing.rentalPeriod==='day' ? 'selected' : '' %>>Per Day
-                                </option>
-                                <option value="week" <%=listing.rentalPeriod==='week' ? 'selected' : '' %>>Per Week
-                                </option>
-                                <option value="month" <%=listing.rentalPeriod==='month' ? 'selected' : '' %>>Per Month
-                                </option>
-                            </select>
-                        </div>
-                        <% } else { %>
-                            <input type="hidden" name="listing[rentalPeriod]" value="N/A">
-                            <% } %>
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label for="description" class="form-label fw-semibold">Description</label>
+                        <textarea name="listing[description]" class="form-control form-input" rows="4"
+                            required><%= listing.description %></textarea>
+                    </div>
 
-                                <!-- ============ CATEGORY-SPECIFIC SPECS ============ -->
-
-                                <% if (listing.mainCategory==='Vehicle' ) { %>
-                                    <label class="form-label fw-semibold">Vehicle Details</label>
-                                    <div class="row mb-4">
-                                        <div class="col-md-4 mb-3 mb-md-0">
-                                            <input type="text" name="listing[specifications][make]"
-                                                value="<%= listing.specifications ? listing.specifications.make || '' : '' %>"
-                                                placeholder="Make" class="form-control">
-                                        </div>
-                                        <div class="col-md-4 mb-3 mb-md-0">
-                                            <input type="text" name="listing[specifications][model]"
-                                                value="<%= listing.specifications ? listing.specifications.model || '' : '' %>"
-                                                placeholder="Model" class="form-control">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <input type="number" name="listing[specifications][year]"
-                                                value="<%= listing.specifications ? listing.specifications.year || '' : '' %>"
-                                                placeholder="Year" class="form-control" min="1900" max="2026">
-                                        </div>
-                                    </div>
-                                    <% } else if (listing.mainCategory==='Property' ) { %>
-                                        <label class="form-label fw-semibold">Property Details</label>
-                                        <div class="row mb-4">
-                                            <div class="col-md-4 mb-3 mb-md-0">
-                                                <input type="text" name="listing[specifications][area]"
-                                                    value="<%= listing.specifications ? listing.specifications.area || '' : '' %>"
-                                                    placeholder="Area" class="form-control">
-                                            </div>
-                                            <div class="col-md-4 mb-3 mb-md-0">
-                                                <input type="number" name="listing[specifications][bedrooms]"
-                                                    value="<%= listing.specifications ? listing.specifications.bedrooms || '' : '' %>"
-                                                    placeholder="Bedrooms" class="form-control" min="0">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <input type="number" name="listing[specifications][bathrooms]"
-                                                    value="<%= listing.specifications ? listing.specifications.bathrooms || '' : '' %>"
-                                                    placeholder="Bathrooms" class="form-control" min="0">
-                                            </div>
-                                        </div>
-                                        <% } else if (listing.mainCategory==='Item' ) { %>
-                                            <label class="form-label fw-semibold">Item Details</label>
-                                            <div class="row mb-4">
-                                                <div class="col-md-6 mb-3 mb-md-0">
-                                                    <input type="text" name="listing[specifications][brand]"
-                                                        value="<%= listing.specifications ? listing.specifications.brand || '' : '' %>"
-                                                        placeholder="Brand" class="form-control">
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <input type="text" name="listing[specifications][model]"
-                                                        value="<%= listing.specifications ? listing.specifications.model || '' : '' %>"
-                                                        placeholder="Model" class="form-control">
-                                                </div>
-                                            </div>
-                                            <% } else if (listing.mainCategory==='Service' ) { %>
-                                                <label class="form-label fw-semibold">Service Details</label>
-                                                <div class="mb-4">
-                                                    <input type="text" name="listing[specifications][experience]"
-                                                        value="<%= listing.specifications ? listing.specifications.experience || '' : '' %>"
-                                                        placeholder="Experience" class="form-control">
-                                                </div>
-                                                <% } %>
-
-                                                    <button class="btn btn-primary-custom w-100 fs-5 mb-5">Save
-                                                        Changes</button>
+                    <button class="btn btn-primary-custom w-100 fs-5 mb-5">Save Changes</button>
                 </form>
             </div>
         </div>
@@ -210,19 +260,9 @@
         // Condition slider
         const condSlider = document.getElementById('conditionGrade');
         const condValue = document.getElementById('conditionValue');
-        condSlider.addEventListener('input', () => {
-            condValue.textContent = condSlider.value;
-        });
-
-        // Price suffix for rental
-        const priceSuffix = document.getElementById('priceSuffix');
-        const rentalSelect = document.getElementById('rentalPeriod');
-        if (rentalSelect) {
-            function updatePriceSuffix() {
-                const period = rentalSelect.value;
-                priceSuffix.textContent = (period && period !== 'N/A') ? ('/ ' + period) : '';
-            }
-            rentalSelect.addEventListener('change', updatePriceSuffix);
-            updatePriceSuffix();
+        if (condSlider) {
+            condSlider.addEventListener('input', () => {
+                condValue.textContent = condSlider.value;
+            });
         }
     </script>

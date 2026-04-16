@@ -11,6 +11,7 @@ body:has(.agent-container) .container.flex-grow-1 {
     margin: 0 !important;
     padding: 0 !important;
     max-width: 100% !important;
+
 }
 
 /* --- Layout: Three-Panel Split --- */
@@ -705,6 +706,7 @@ body:has(.agent-container) .container.flex-grow-1 {
         opacity: 0;
         transform: translateY(8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -716,6 +718,7 @@ body:has(.agent-container) .container.flex-grow-1 {
         opacity: 0;
         transform: translateY(16px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -723,9 +726,13 @@ body:has(.agent-container) .container.flex-grow-1 {
 }
 
 @keyframes bounce {
-    0%, 80%, 100% {
+
+    0%,
+    80%,
+    100% {
         transform: translateY(0);
     }
+
     40% {
         transform: translateY(-6px);
     }
@@ -781,6 +788,7 @@ body:has(.agent-container) .container.flex-grow-1 {
 }
 
 @media (min-width: 992px) {
+
     .history-toggle,
     .listings-toggle {
         display: none !important;

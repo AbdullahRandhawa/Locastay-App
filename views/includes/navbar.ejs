@@ -1,69 +1,145 @@
-<nav class="navbar navbar-expand-lg sticky-top">
-  <div class="container-fluid px-4">
-    <a class="navbar-brand" href="/listings">
+<!-- Mobile Drawer Backdrop -->
+<div class="nav-backdrop" id="navBackdrop"></div>
+
+<nav class="navbar sticky-top">
+  <div class="container-fluid px-3 px-lg-4 d-flex align-items-center gap-2">
+
+    <!-- Brand -->
+    <a class="navbar-brand d-flex align-items-center gap-2 me-2" href="/listings">
       <i class="fa-solid fa-house"></i>
+      <span class="brand-text">Rentlyst</span>
     </a>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    
-    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <!-- Left side: Links -->
-      <div class="navbar-nav">
-        <a class="nav-link mx-3" href="/listings">Explore</a>
-        <a class="nav-link ms-3" href="/listings/new">Add New Listing</a>
-      </div>
-
-      <!-- Center: Search Bar -->
-      <div class="navbar-nav mx-auto">
-        <form class="d-flex search-bar" role="search" method="GET" action="/listings/search">
-          <input class="form-control search-input" type="search" placeholder="Search destinations" name="q" />
-          <button class="btn search-btn" type="submit">
-            <i class="fa-solid fa-magnifying-glass"></i> Search
-          </button>
-        </form>
-      </div>
-
-      <!-- Right side: Agent button + Profile / Login -->
-      <div class="navbar-nav ms-auto align-items-center">
-        <% if(currUser) { %>
-          <a class="nav-link me-3 fw-medium" href="/messages">
-            <i class="fa-regular fa-comment"></i> Messages
-          </a>
-          <a class="nav-link me-4 fw-medium" href="/agent">
-            Ask Rentlyst
-          </a>
-        <% } %>
-
-        <% if(!currUser) { %>
-          <a class="nav-link" href="/signup">Sign up</a>
-          <a class="nav-link" href="/login">Log in</a>
-        <% } %>
-        
-        <% if(currUser) { %>
-          <div class="dropdown">
-            <div class="user-menu" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="fa-solid fa-bars"></i>
-              <div class="host-avatar" style="width: 32px; height: 32px; font-size: 0.9rem; overflow: hidden; border-radius: 50%;">
-                <% if(locals.currProfile && currProfile.profileImg && currProfile.profileImg.url && !currProfile.profileImg.url.includes('pexels.com')) { %>
-                  <img src="<%= currProfile.profileImg.url %>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
-                <% } else { %>
-                  <%= currUser.username ? currUser.username.charAt(0).toUpperCase() : 'U' %>
-                <% } %>
-              </div>
-            </div>
-            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2"
-              aria-labelledby="dropdownMenuButton1">
-              <li><a class="dropdown-item fw-semibold" href="/profile">My Profile</a></li>
-              <li>
-                <hr class="dropdown-divider">
-              </li>
-              <li><a class="dropdown-item" href="/logout">Log out</a></li>
-            </ul>
-          </div>
-        <% } %>
-      </div>
+    <!-- Left Links: Explore + Add Listing (hidden on mobile) -->
+    <div class="d-none d-md-flex align-items-center gap-3 mx-3">
+      <a class="nav-link nav-pill" href="/listings"><i class="fa-solid fa-compass"></i><span
+          class="d-none d-lg-inline ms-1">Explore</span></a>
+      <a class="nav-link nav-pill" href="/listings/new"><i class="fa-solid fa-plus"></i><span
+          class="d-none d-lg-inline ms-1">Add Listing</span></a>
     </div>
+
+    <!-- Center: Search Bar (visible md+) -->
+    <form class="search-bar d-none d-md-flex mx-auto" role="search" method="GET" action="/listings/search">
+      <input class="form-control search-input" type="search" placeholder="Search listings..." name="q" />
+      <button class="btn search-btn" type="submit">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+    </form>
+
+    <!-- Right: Auth links + user menu (hidden on mobile) -->
+    <div class="d-none d-md-flex align-items-center gap-3 mx-3">
+      <% if(currUser) { %>
+        <a class="nav-link nav-pill" href="/messages"><i class="fa-regular fa-comment"></i><span
+            class="d-none d-lg-inline ms-1">Messages</span></a>
+        <a class="nav-link nav-pill" href="/agent"><i class="fa-solid fa-robot"></i><span
+            class="d-none d-lg-inline ms-1">Ask Rentlyst</span></a>
+        <% } %>
+          <% if(!currUser) { %>
+            <a class="nav-link nav-pill" href="/signup"><i class="fa-solid fa-user-plus"></i><span
+                class="d-none d-lg-inline ms-1">Sign up</span></a>
+            <a class="nav-link nav-pill" href="/login"><i class="fa-solid fa-right-to-bracket"></i><span
+                class="d-none d-lg-inline ms-1">Log in</span></a>
+            <% } %>
+              <% if(currUser) { %>
+                <div class="dropdown ms-1">
+                  <div class="user-menu" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-bars"></i>
+                    <div class="host-avatar"
+                      style="width:32px;height:32px;font-size:0.9rem;overflow:hidden;border-radius:50%;">
+                      <% if(locals.currProfile && currProfile.profileImg && currProfile.profileImg.url &&
+                        !currProfile.profileImg.url.includes('pexels.com')) { %>
+                        <img src="<%= currProfile.profileImg.url %>" alt="Profile"
+                          style="width:100%;height:100%;object-fit:cover;">
+                        <% } else { %>
+                          <%= currUser.username ? currUser.username.charAt(0).toUpperCase() : 'U' %>
+                            <% } %>
+                    </div>
+                  </div>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2"
+                    aria-labelledby="dropdownMenuButton1">
+                    <li><a class="dropdown-item fw-semibold" href="/profile">My Profile</a></li>
+                    <li>
+                      <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item" href="/logout">Log out</a></li>
+                  </ul>
+                </div>
+                <% } %>
+    </div>
+
+    <!-- Mobile: Hamburger (shown only on mobile < md) -->
+    <div class="d-flex d-md-none align-items-center ms-auto">
+      <% if(currUser) { %>
+        <div class="mobile-avatar-pill" id="mobileMenuBtn">
+          <i class="fa-solid fa-bars"></i>
+          <div class="host-avatar" style="width:28px;height:28px;font-size:0.8rem;overflow:hidden;border-radius:50%;">
+            <% if(locals.currProfile && currProfile.profileImg && currProfile.profileImg.url &&
+              !currProfile.profileImg.url.includes('pexels.com')) { %>
+              <img src="<%= currProfile.profileImg.url %>" alt="Profile"
+                style="width:100%;height:100%;object-fit:cover;">
+              <% } else { %>
+                <%= currUser.username ? currUser.username.charAt(0).toUpperCase() : 'U' %>
+                  <% } %>
+          </div>
+        </div>
+        <% } else { %>
+          <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <% } %>
+    </div>
+
   </div>
 </nav>
+
+<!-- Mobile Drawer -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="drawer-header">
+    <span class="fw-semibold" style="font-size:1.05rem;">Menu</span>
+    <button class="drawer-close" id="drawerClose" aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <!-- Same pill search as desktop -->
+  <div class="drawer-search">
+    <form class="search-bar w-100" role="search" method="GET" action="/listings/search">
+      <input class="form-control search-input" type="search" placeholder="Search listings..." name="q" />
+      <button class="btn search-btn" type="submit">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+    </form>
+  </div>
+
+  <div class="drawer-nav">
+    <a class="drawer-link" href="/listings"><i class="fa-solid fa-compass"></i><span>Explore</span></a>
+    <a class="drawer-link" href="/listings/new"><i class="fa-solid fa-plus"></i><span>Add New Listing</span></a>
+    <% if(currUser) { %>
+      <a class="drawer-link" href="/messages"><i class="fa-regular fa-comment"></i><span>Messages</span></a>
+      <a class="drawer-link" href="/agent"><i class="fa-solid fa-robot"></i><span>Ask Rentlyst</span></a>
+      <div class="drawer-divider"></div>
+      <a class="drawer-link" href="/profile"><i class="fa-solid fa-user"></i><span>My Profile</span></a>
+      <a class="drawer-link drawer-link-danger" href="/logout"><i class="fa-solid fa-right-from-bracket"></i><span>Log
+          out</span></a>
+      <% } else { %>
+        <div class="drawer-divider"></div>
+        <a class="drawer-link" href="/signup"><i class="fa-solid fa-user-plus"></i><span>Sign up</span></a>
+        <a class="drawer-link drawer-link-primary" href="/login"><i class="fa-solid fa-right-to-bracket"></i><span>Log
+            in</span></a>
+        <% } %>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const btn = document.getElementById('mobileMenuBtn');
+    const drawer = document.getElementById('mobileDrawer');
+    const backdrop = document.getElementById('navBackdrop');
+    const closeBtn = document.getElementById('drawerClose');
+    function openDrawer() { drawer.classList.add('open'); backdrop.classList.add('visible'); document.body.style.overflow = 'hidden'; }
+    function closeDrawer() { drawer.classList.remove('open'); backdrop.classList.remove('visible'); document.body.style.overflow = ''; }
+    if (btn) btn.addEventListener('click', openDrawer);
+    if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+    if (backdrop) backdrop.addEventListener('click', closeDrawer);
+  })();
+</script>

@@ -1,39 +1,43 @@
 <% layout("/layouts/boilerplate") %>
 
-    <body class="container-fluid">
-        <br>
-        <p> All searches for : <b>
-                <%=q%>
-            </b>
-        </p>
-        <br>
-        <br>
-        <% if(allListings.length===0){ %>
-            <h1>No listings found matching your Search!</h1>
-            <%} %>
+<!-- Search header -->
+<div class="mb-3">
+    <p class="text-muted mb-0">Search results for: <strong class="text-dark"><%= q %></strong></p>
+</div>
 
-                <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 ">
-                    <% for(let listing of allListings){ %>
-                        <a href="/listings/<%= listing._id %>" class="listing-link">
-                            <div class="card listing-card card-clicked">
-                                <img src="<%= listing.image && listing.image.length > 0 ? listing.image[0].url : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800' %>"
-                                    class="card-img-top" style="height: 20rem;" alt="listing-image">
-                                <div class="card-body">
-                                    <p class="card-text"><b>
-                                            <%= listing.title %>
-                                        </b><br>
-                                        &#8360; <%= listing.price.toLocaleString('en-PK') %>
-                                            <% if(listing.listingType==='Rent' && listing.rentalPeriod &&
-                                                listing.rentalPeriod !=='N/A' ) { %>
-                                                / <%= listing.rentalPeriod %>
-                                                    <% } %>
-                                    </p>
-                                </div>
-                            </div>
-
-                        </a>
-                        <%} %>
-
+<% if(allListings.length === 0) { %>
+<div class="text-center py-5">
+    <i class="fa-solid fa-magnifying-glass fs-1 text-muted mb-3 d-block"></i>
+    <h4 class="fw-semibold">No listings found</h4>
+    <p class="text-muted">Try a different search term.</p>
+    <a href="/listings" class="btn btn-outline-dark mt-2">Browse all listings</a>
+</div>
+<% } else { %>
+<div class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-1 g-4">
+    <% for(let listing of allListings){ %>
+    <div class="col">
+        <a href="/listings/<%= listing._id %>" class="listing-link">
+            <div class="listing-card">
+                <div class="listing-img-container position-relative">
+                    <img src="<%= listing.image && listing.image.length > 0 ? listing.image[0].url : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800' %>" class="card-img-top" alt="<%= listing.title %>">
+                    <% if(listing.listingType) { %>
+                    <span class="position-absolute top-0 end-0 m-2 badge bg-<%= listing.listingType === 'Rent' ? 'warning text-dark' : 'success' %>" style="font-size:0.7rem;"><%= listing.listingType %></span>
+                    <% } %>
                 </div>
-
-    </body>
+                <div class="mt-2">
+                    <div class="d-flex align-items-center gap-1 mb-1">
+                        <% if(listing.mainCategory) { %><span class="badge rounded-pill" style="background:rgba(0,0,0,0.07); color:var(--text-muted); font-size:0.65rem; font-weight:600;"><%= listing.mainCategory %></span><% } %>
+                        <% if(listing.subCategory) { %><span class="badge rounded-pill" style="background:rgba(255,56,92,0.1); color:var(--primary); font-size:0.65rem; font-weight:600;"><%= listing.subCategory %></span><% } %>
+                    </div>
+                    <p class="fw-semibold mb-0 text-truncate" style="font-size:0.95rem; color:var(--text-dark);"><%= listing.title %></p>
+                    <p class="text-muted mb-1" style="font-size:0.82rem;"><i class="fa-solid fa-location-dot me-1"></i><%= listing.city %>, <%= listing.country %></p>
+                    <p class="fw-semibold mb-0" style="color:var(--text-dark); font-size:0.95rem;">&#8360; <%= listing.price.toLocaleString('en-PK') %>
+                        <% if(listing.listingType==='Rent' && listing.rentalPeriod && listing.rentalPeriod !=='N/A') { %><span class="fw-normal text-muted" style="font-size:0.82rem;">/ <%= listing.rentalPeriod %></span><% } %>
+                    </p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <% } %>
+</div>
+<% } %>

@@ -76,20 +76,23 @@
                     <% for(let listing of allListings){ %>
                         <div class="col">
                             <a href="/listings/<%= listing._id %>" class="listing-link">
-                                <div class="card listing-card h-100">
-                                    <div class="listing-img-container shadow-sm">
-                                        <img src="<%= listing.image[0].url %>" class="card-img-top"
-                                            alt="<%= listing.title %>">
+                                <div class="listing-card">
+                                    <div class="listing-img-container position-relative">
+                                        <img src="<%= listing.image && listing.image.length > 0 ? listing.image[0].url : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800' %>" class="card-img-top" alt="<%= listing.title %>">
+                                        <% if(listing.listingType) { %>
+                                        <span class="position-absolute top-0 end-0 m-2 badge bg-<%= listing.listingType === 'Rent' ? 'warning text-dark' : 'success' %>" style="font-size:0.7rem;"><%= listing.listingType %></span>
+                                        <% } %>
                                     </div>
-                                    <div class="card-body">
-                                        <p class="card-text mb-1"><b>
-                                                <%= listing.location %>, <%= listing.country %>
-                                            </b></p>
-                                        <p class="card-text mb-1">
-                                            <%= listing.title %>
+                                    <div class="mt-2">
+                                        <div class="d-flex align-items-center gap-1 mb-1">
+                                            <% if(listing.mainCategory) { %><span class="badge rounded-pill" style="background:rgba(0,0,0,0.07); color:var(--text-muted); font-size:0.65rem; font-weight:600;"><%= listing.mainCategory %></span><% } %>
+                                            <% if(listing.subCategory) { %><span class="badge rounded-pill" style="background:rgba(255,56,92,0.1); color:var(--primary); font-size:0.65rem; font-weight:600;"><%= listing.subCategory %></span><% } %>
+                                        </div>
+                                        <p class="fw-semibold mb-0 text-truncate" style="font-size:0.95rem; color:var(--text-dark);"><%= listing.title %></p>
+                                        <p class="text-muted mb-1" style="font-size:0.82rem;"><i class="fa-solid fa-location-dot me-1"></i><%= listing.city %>, <%= listing.country %></p>
+                                        <p class="fw-semibold mb-0" style="color:var(--text-dark); font-size:0.95rem;">&#8360; <%= listing.price.toLocaleString('en-PK') %>
+                                            <% if(listing.listingType==='Rent' && listing.rentalPeriod && listing.rentalPeriod !=='N/A') { %><span class="fw-normal text-muted" style="font-size:0.82rem;">/ <%= listing.rentalPeriod %></span><% } %>
                                         </p>
-                                        <p class="price">&#8360; <%= listing.price.toLocaleString('en-PK') %> <span
-                                                    class="text-muted fw-normal">night</span></p>
                                     </div>
                                 </div>
                             </a>

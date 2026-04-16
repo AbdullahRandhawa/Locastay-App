@@ -68,7 +68,7 @@ function buildSearchContext(listing) {
 // 1. INDEX ROUTE
 module.exports.index = async (req, res) => {
     const allListings = await Listing.find({});
-    res.render('listings/index.ejs', { allListings });
+    res.render('listings/index.ejs', { allListings, CATEGORIES });
 };
 
 // 2. SEARCH ROUTE (Updated to include new categories)

@@ -7,7 +7,7 @@ const { admin } = require('../firebaseAdmin');
 // The browser uses the Firebase SDK to create the account in Firebase first,
 // then sends us the ID token. We verify it and create the Mongo record.
 module.exports.renderSignupForm = async (req, res, next) => {
-    res.render('users/signup.ejs');
+    res.render('users/signup.ejs', { hideFooter: true });
 }
 
 module.exports.createSignup = async (req, res, next) => {
@@ -94,7 +94,7 @@ module.exports.createSignup = async (req, res, next) => {
 // The browser uses the Firebase SDK to sign in, gets an ID token,
 // and sends it here. We verify it and create a secure session cookie.
 module.exports.renderloginForm = async (req, res, next) => {
-    res.render('users/login.ejs');
+    res.render('users/login.ejs', { hideFooter: true });
 }
 
 module.exports.login = async (req, res) => {

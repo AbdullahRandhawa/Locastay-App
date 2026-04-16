@@ -5,43 +5,46 @@
   <div class="container-fluid px-3 px-lg-4 d-flex align-items-center gap-2">
 
     <!-- Brand -->
-    <a class="navbar-brand d-flex align-items-center gap-2 me-2" href="/listings">
+    <a class="navbar-brand d-flex align-items-center  me-2" href="/listings">
       <i class="fa-solid fa-house"></i>
       <span class="brand-text">Rentlyst</span>
     </a>
 
-    <!-- Left Links: Explore + Add Listing (hidden on mobile) -->
-    <div class="d-none d-md-flex align-items-center gap-3 mx-3">
-      <a class="nav-link nav-pill" href="/listings"><i class="fa-solid fa-compass"></i><span
+    <!-- Left Links: Explore (visible) + Add Listing (desktop only) -->
+    <div class="d-flex align-items-center gap-1 gap-md-3 ms-1 mx-md-3">
+      <a class="nav-link nav-pill" href="/listings"><i class="fa-solid fa-compass fa-xl"></i><span
           class="d-none d-lg-inline ms-1">Explore</span></a>
-      <a class="nav-link nav-pill" href="/listings/new"><i class="fa-solid fa-plus"></i><span
+      <a class="nav-link nav-pill " href="/listings/new"><i class="fa-solid fa-plus fa-xl"></i><span
           class="d-none d-lg-inline ms-1">Add Listing</span></a>
+      <!-- d-none d-md-flex align-items-center -->
     </div>
 
     <!-- Center: Search Bar (visible md+) -->
     <form class="search-bar d-none d-md-flex mx-auto" role="search" method="GET" action="/listings/search">
       <input class="form-control search-input" type="search" placeholder="Search listings..." name="q" />
       <button class="btn search-btn" type="submit">
-        <i class="fa-solid fa-magnifying-glass"></i>
+        <i class="fa-solid fa-magnifying-glass "></i>
       </button>
     </form>
 
-    <!-- Right: Auth links + user menu (hidden on mobile) -->
-    <div class="d-none d-md-flex align-items-center gap-3 mx-3">
+    <!-- Right: Auth links + user menu -->
+    <div class="d-flex align-items-center gap-1 gap-md-3 ms-auto mx-md-3">
       <% if(currUser) { %>
-        <a class="nav-link nav-pill" href="/messages"><i class="fa-regular fa-comment"></i><span
+        <a class="nav-link nav-pill" href="/messages"><i class="fa-regular fa-comment-dots fa-xl"></i><span
             class="d-none d-lg-inline ms-1">Messages</span></a>
-        <a class="nav-link nav-pill" href="/agent"><i class="fa-solid fa-robot"></i><span
+        <a class="nav-link nav-pill" href="/agent"><i class="fa-solid fa-robot fa-lg"></i><span
             class="d-none d-lg-inline ms-1">Ask Rentlyst</span></a>
         <% } %>
           <% if(!currUser) { %>
-            <a class="nav-link nav-pill" href="/signup"><i class="fa-solid fa-user-plus"></i><span
+            <a class="nav-link nav-pill d-none d-md-flex" href="/signup"><i class="fa-solid fa-user-plus"></i><span
                 class="d-none d-lg-inline ms-1">Sign up</span></a>
-            <a class="nav-link nav-pill" href="/login"><i class="fa-solid fa-right-to-bracket"></i><span
-                class="d-none d-lg-inline ms-1">Log in</span></a>
+            <a class="nav-link nav-pill d-none d-md-flex" href="/login"><i
+                class="fa-solid fa-right-to-bracket"></i><span class="d-none d-lg-inline ms-1">Log in</span></a>
             <% } %>
+
               <% if(currUser) { %>
-                <div class="dropdown ms-1">
+                <!-- Desktop User Dropdown -->
+                <div class="dropdown ms-1 d-none d-md-block">
                   <div class="user-menu" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fa-solid fa-bars"></i>
                     <div class="host-avatar"
@@ -64,29 +67,27 @@
                     <li><a class="dropdown-item" href="/logout">Log out</a></li>
                   </ul>
                 </div>
-                <% } %>
-    </div>
 
-    <!-- Mobile: Hamburger (shown only on mobile < md) -->
-    <div class="d-flex d-md-none align-items-center ms-auto">
-      <% if(currUser) { %>
-        <div class="mobile-avatar-pill" id="mobileMenuBtn">
-          <i class="fa-solid fa-bars"></i>
-          <div class="host-avatar" style="width:28px;height:28px;font-size:0.8rem;overflow:hidden;border-radius:50%;">
-            <% if(locals.currProfile && currProfile.profileImg && currProfile.profileImg.url &&
-              !currProfile.profileImg.url.includes('pexels.com')) { %>
-              <img src="<%= currProfile.profileImg.url %>" alt="Profile"
-                style="width:100%;height:100%;object-fit:cover;">
-              <% } else { %>
-                <%= currUser.username ? currUser.username.charAt(0).toUpperCase() : 'U' %>
+                <!-- Mobile Avatar Hamburger -->
+                <div class="mobile-avatar-pill d-md-none ms-1" id="mobileMenuBtn">
+                  <i class="fa-solid fa-bars"></i>
+                  <!-- <div class="host-avatar"
+                    style="width:28px;height:28px;font-size:0.8rem;overflow:hidden;border-radius:50%;">
+                    <% if(locals.currProfile && currProfile.profileImg && currProfile.profileImg.url &&
+                      !currProfile.profileImg.url.includes('pexels.com')) { %>
+                      <img src="<%= currProfile.profileImg.url %>" alt="Profile"
+                        style="width:100%;height:100%;object-fit:cover;">
+                      <% } else { %>
+                        <%= currUser.username ? currUser.username.charAt(0).toUpperCase() : 'U' %>
+                          <% } %>
+                  </div> -->
+                </div>
+                <% } else { %>
+                  <!-- Mobile Login Hamburger -->
+                  <button class="mobile-menu-btn d-md-none ms-1" id="mobileMenuBtn" aria-label="Open menu">
+                    <i class="fa-solid fa-bars"></i>
+                  </button>
                   <% } %>
-          </div>
-        </div>
-        <% } else { %>
-          <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
-            <i class="fa-solid fa-bars"></i>
-          </button>
-          <% } %>
     </div>
 
   </div>

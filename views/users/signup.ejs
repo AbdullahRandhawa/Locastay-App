@@ -1,26 +1,114 @@
 <% layout("/layouts/boilerplate") %>
+    <style>
+        footer {
+            display: none !important;
+        }
+    </style>
 
     <body>
-        <div class="row">
-            <div class="col-6 col-lg-6 col-md-8 col-sm-10 offset-3 offset-lg-3 offset-md-2 offset-sm-1">
-                <h4>Signup on Rentlyst</h4>
-                <div id="signup-error" class="alert alert-danger d-none" role="alert"></div>
+        <div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 120px);">
+            <div class="col-12 col-lg-10 col-xl-8">
+                <div class="card border-0 shadow"
+                    style="border-radius: var(--radius-xl); background-color: var(--bg-main); overflow: hidden;">
+                    <div class="row g-0 position-relative">
+                        <!-- Shortened vertical divider -->
+                        <div class="d-none d-md-block position-absolute"
+                            style="width: 1px; background-color: var(--bg-tertiary); top: 15%; bottom: 15%; left: 50%;">
+                        </div>
 
-                <form id="signup-form" class="needs-validation" novalidate>
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" name="username" id="username" class="form-control" required>
+                        <!-- Left Info Section (Hidden on mobile) -->
+                        <div class="col-md-6 d-none d-md-flex flex-column justify-content-center p-4 p-lg-5">
+                            <div class="text-center mb-4">
+                                <!-- <i class="fa-solid fa-house mb-3" style="color: var(--primary); font-size: 2.5rem;"></i> -->
+                                <h3 class="fw-bold mb-2">Join <span style="color: var(--primary);">Rentlyst</span></h3>
+                                <p class="text-muted" style="font-size: 0.95rem; line-height: 1.4;">Create an account to
+                                    unlock the full potential of this platform.</p>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-start mb-4">
+                                    <i class="fa-solid fa-globe mt-1 me-3 fs-5" style="color: var(--primary);"></i>
+                                    <div>
+                                        <h6 class="fw-bold mb-1" style="font-size: 0.95rem;">Explore Globally</h6>
+                                        <p class="text-muted small mb-0" style="font-size: 0.85rem; line-height: 1.5;">
+                                            Access premium listings across various categories, explore unique
+                                            items, and connect with users from around the world.</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-start mb-4">
+                                    <i class="fa-solid fa-robot mt-1 me-3 fs-5" style="color: var(--primary);"></i>
+                                    <div>
+                                        <h6 class="fw-bold mb-1" style="font-size: 0.95rem;">Ask Rentlyst AI</h6>
+                                        <p class="text-muted small mb-0" style="font-size: 0.85rem; line-height: 1.5;">
+                                            Talk to our intelligent agent for personalized recommendations,
+                                            price checks and instant help whenever you need it.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="  d-flex align-items-start">
+                                    <i class="fa-regular fa-comments mt-1 me-3 fs-5" style="color: var(--primary);"></i>
+                                    <div>
+                                        <h6 class="fw-bold mb-1" style="font-size: 0.95rem;">Message & Chat</h6>
+                                        <p class="text-muted small mb-0" style="font-size: 0.85rem; line-height: 1.5;">
+                                            Seamlessly
+                                            communicate with owners and renters, negotiate terms in real-time.</p>
+                                    </div>
+                                </div>
+
+
+
+
+                            </div>
+                        </div>
+
+                        <!-- Right Form Section -->
+                        <div class="col-md-6 p-4 p-lg-5 d-flex flex-column justify-content-center">
+
+
+                            <div class="text-center mb-4">
+                                <!-- <i class="fa-solid fa-house mb-3" style="color: var(--primary); font-size: 2.5rem;"></i> -->
+                                <h3 class="fw-bold mb-2"><span style="color: var(--primary);">Create</span> Account</h3>
+                                <p class="text-muted d-md-none" style="font-size: 0.95rem; line-height: 1.4;">Create an
+                                    account to unlock the full potential of <span
+                                        style="color: var(--primary);">Rentlyst</span>.</p>
+                            </div>
+
+                            <div id="signup-error" class="alert alert-danger d-none py-2" role="alert"></div>
+
+                            <form id="signup-form" class="needs-validation" novalidate>
+                                <div class="mb-3">
+                                    <label for="username" class="form-label fw-semibold"
+                                        style="font-size: 0.9rem;">Username</label>
+                                    <input type="text" name="username" id="username" class="form-control bg-light"
+                                        style="padding: 0.6rem 1rem;" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label fw-semibold" style="font-size: 0.9rem;">Email
+                                        Address</label>
+                                    <input type="email" name="email" id="email" class="form-control bg-light"
+                                        style="padding: 0.6rem 1rem;" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="password" class="form-label fw-semibold"
+                                        style="font-size: 0.9rem;">Password</label>
+                                    <input type="password" name="password" id="password" class="form-control bg-light"
+                                        style="padding: 0.6rem 1rem;" required minlength="6">
+                                </div>
+                                <button id="signup-btn" class="btn btn-primary-custom w-100 py-2 mt-2 shadow-sm"
+                                    style="border-radius: var(--radius-sm);">Create Account</button>
+                            </form>
+
+                            <div class="mt-2 pt-1">
+                                <hr class="mx-auto my-3"
+                                    style="border: 0; background-color: var(--text-light); height: 1px; opacity: 0.5; width: 60%;">
+                                <p class="text-center text-muted mt-3 mb-0" style="font-size: 0.9rem;">Already have an
+                                    account? <a href="/login" class="fw-bold text-decoration-none"
+                                        style="color: var(--primary);">Login</a></p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" name="email" id="email" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" name="password" id="password" class="form-control" required minlength="6">
-                    </div>
-                    <button id="signup-btn" class="btn btn-danger">Sign Up</button>
-                </form>
+                </div>
             </div>
         </div>
 

@@ -47,21 +47,21 @@
             <div class="chat-messages" id="chatMessages">
                 <!-- Welcome Message -->
                 <div class="welcome-screen" id="welcomeScreen">
-                    <h4>Hey there! I'm your Rentlyst Agent</h4>
-                    <p>I know every listing on the platform. Ask me anything — I can help you find deals, compare
-                        options, and discover what you need.</p>
+                    <h4>Hey! I'm your Rentlyst Assistant</h4>
+                    <p>I can help you find anything on the platform — from cars and electronics to apartments and
+                        services. Just ask!</p>
                     <div class="quick-actions">
-                        <button class="quick-btn" data-query="Show me the best cars available">
-                            <i class="fa-solid fa-car"></i> Best cars
+                        <button class="quick-btn" data-query="What vehicles are available for rent or sale?">
+                            <i class="fa-solid fa-car"></i> Find Vehicles
                         </button>
-                        <button class="quick-btn" data-query="What apartments are available for rent?">
-                            <i class="fa-solid fa-building"></i> Apartments for rent
+                        <button class="quick-btn" data-query="Show me available properties and apartments">
+                            <i class="fa-solid fa-building"></i> Browse Properties
                         </button>
-                        <button class="quick-btn" data-query="Find me cheap electronics under 5000">
-                            <i class="fa-solid fa-laptop"></i> Cheap electronics
+                        <button class="quick-btn" data-query="What electronics or gadgets are listed for sale?">
+                            <i class="fa-solid fa-mobile-screen"></i> Electronics & Gadgets
                         </button>
-                        <button class="quick-btn" data-query="What services are available?">
-                            <i class="fa-solid fa-wrench"></i> Services
+                        <button class="quick-btn" data-query="What services are available on the platform?">
+                            <i class="fa-solid fa-screwdriver-wrench"></i> Available Services
                         </button>
                     </div>
                 </div>
@@ -89,10 +89,9 @@
                 </div>
             </div>
         </aside>
+        <!-- Overlay for mobile sidebars -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
     </div>
-
-    <!-- Overlay for mobile sidebars -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <!-- Pass profile image to JS -->
     <script>

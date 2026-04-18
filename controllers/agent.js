@@ -4,19 +4,26 @@ const Listing = require('../models/listing');
 const { generateEmbedding, cosineSimilarity } = require('../utils/embedding');
 const openai = require('../utils/openai');
 
-const LLM_MODEL = process.env.OPENROUTER_LLM_MODEL || 'meta-llama/llama-3.1-8b-instruct:free';
+const rawModels = process.env.OPENROUTER_FALLBACK_MODELS || process.env.OPENROUTER_LLM_MODEL || "";
+const LLM_MODELS = rawModels.split(',').map(m => m.trim()).filter(Boolean);
 
-const SYSTEM_PROMPT = `You are "Rentlyst Agent" — an elite, highly articulate property and marketplace advisor on the Rentlyst platform.
+const SYSTEM_PROMPT = `You are "Rentlyst Assistant" — a smart, friendly marketplace advisor for the Rentlyst platform.
+
+Rentlyst is a multi-category buy/sell/rent marketplace covering:
+- **Vehicles**: Cars, motorcycles, bicycles, boats
+- **Properties**: Houses, apartments, shared rooms, land, vacation rentals
+- **Items**: Tech & mobiles, electronics, home appliances, furniture, clothes, sports gear, spare parts
+- **Services**: Home services (plumber, electrician), health & medical, IT & programming, creative & design, tutors, cleaning, events & photography, transportation
 
 Your personality:
-- You speak with warmth, sophistication, and confidence — like a knowledgeable friend who happens to be an expert real estate and marketplace advisor.
-- You are proactive. Don't just list things — RECOMMEND. Tell the user which option is the best deal and why.
-- You are personalized. If you have any profile context about the user (budget, preferences, location, history), actively use it to tailor your suggestions.
-- You are insightful. Comment on value for money, condition, location advantages, and highlight what makes a listing stand out.
-- You use a natural, flowing writing style — avoid bullet-dump lists unless absolutely necessary to compare multiple items.
-- Keep responses focused and conversational. Do not write essays, but do write with substance. Aim for 3-6 sentences for simple queries, more detail when recommending or comparing.
-- Never just repeat raw data back to the user. Transform it into a helpful, human recommendation.
-- If listings are available, always end with a clear recommendation or next step (e.g. "I'd suggest starting with...", "The Grandeur is your best bet because...").`;
+- Warm, knowledgeable, and direct — like a helpful friend who knows the platform inside out.
+- Proactive: don't just list things — RECOMMEND. Tell the user which option is the best deal and why.
+- Personalized: if you have profile context about the user (budget, location, preferences), actively use it.
+- Insightful: comment on value for money, condition grade, location advantages, and what makes a listing stand out.
+- Conversational: avoid bullet-dump walls. Aim for 3-5 focused sentences for simple queries, more detail when comparing.
+- Never parrot raw data — transform it into a genuinely helpful recommendation.
+- Always end with a clear next step or recommendation (e.g., "I'd start with...", "This one stands out because...").
+- If the user asks about something outside your listings, politely let them know and redirect them to what the platform does offer.`;
 
 // ==========================================
 // HELPER FUNCTIONS
@@ -72,11 +79,7 @@ Skip greetings, filler, and anything useless. If nothing useful, reply exactly: 
 Messages:
 ${chatText}`;
 
-            const result = await openai.chat.completions.create({
-                model: LLM_MODEL,
-                messages: [{ role: 'user', content: summaryPrompt }],
-                max_tokens: 300
-            });
+            const result = await callLLMWithFallback([{ role: 'user', content: summaryPrompt }], 300);
             const summary = result.choices[0].message.content.trim();
 
             if (summary && !summary.includes('NO_NEW_INFO') && summary.length > 5) {
@@ -89,11 +92,7 @@ ${chatText}`;
                 // Consolidate if too long
                 if (profile.agentContext.length > 2000) {
                     const consolidatePrompt = `Merge this user profile into a clean labeled list. Remove duplicates, keep all unique facts. Use format "Label: value" per line.\n\n${profile.agentContext}`;
-                    const cResult = await openai.chat.completions.create({
-                        model: LLM_MODEL,
-                        messages: [{ role: 'user', content: consolidatePrompt }],
-                        max_tokens: 400
-                    });
+                    const cResult = await callLLMWithFallback([{ role: 'user', content: consolidatePrompt }], 400);
                     const consolidated = cResult.choices[0].message.content.trim();
                     if (consolidated && consolidated.length > 5) {
                         profile.agentContext = consolidated;
@@ -125,7 +124,6 @@ function buildSlidingHistory(messages) {
     }));
     
     // Sanitize: OpenAI strictly forbids consecutive 'user' or 'assistant' messages.
-    // If a previous error caused two user messages in a row, merge them into one.
     const sanitized = [];
     for (const msg of recent) {
         if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === msg.role) {
@@ -137,10 +135,96 @@ function buildSlidingHistory(messages) {
     
     // Ensure the last message in history isn't user (the new query handles that)
     if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') {
-        sanitized.pop(); // Remove it so we don't send consecutive user messages
+        sanitized.pop();
     }
 
     return sanitized;
+}
+
+/**
+ * Semantic listing search.
+ * Tries native Atlas $vectorSearch first (fast, indexed).
+ * Falls back to JS cosine similarity scan if Atlas index is not set up.
+ */
+async function searchListings(queryVector) {
+    // --- Attempt 1: MongoDB Atlas Vector Search (fast native C++ search) ---
+    try {
+        const results = await Listing.aggregate([
+            {
+                $vectorSearch: {
+                    index: 'listing_vector_index',
+                    path: 'listingVector',
+                    queryVector: queryVector,
+                    numCandidates: 150,
+                    limit: 5
+                }
+            },
+            {
+                $project: {
+                    title: 1, city: 1, listingType: 1, price: 1,
+                    rentalPeriod: 1, image: 1, searchContext: 1,
+                    score: { $meta: 'vectorSearchScore' }
+                }
+            },
+            { $match: { score: { $gte: 0.7 } } }
+        ]);
+        if (results.length >= 0) return results; // Even 0 results is a valid Atlas response
+    } catch (atlasErr) {
+        // Atlas index not set up yet — fall through to JS cosine fallback
+        console.warn('[Atlas Vector Search] Not available, falling back to JS cosine similarity:', atlasErr.message);
+    }
+
+    // --- Fallback: JS cosine similarity scan (capped at 100 listings) ---
+    const listings = await Listing.find({ listingVector: { $exists: true, $ne: [] } })
+        .select('title city listingType price rentalPeriod image searchContext listingVector')
+        .sort({ updatedAt: -1 })
+        .limit(100);
+
+    return listings
+        .map(l => ({ ...l.toObject(), score: cosineSimilarity(queryVector, l.listingVector) }))
+        .filter(l => l.score > 0.3)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5);
+}
+
+/**
+ * Try each LLM model in order. Returns first successful streaming response.
+ * For non-streaming fallback calls (summarization etc.).
+ */
+async function callLLMWithFallback(messages, max_tokens) {
+    let lastErr;
+    for (const model of LLM_MODELS) {
+        try {
+            return await openai.chat.completions.create({ model, messages, max_tokens });
+        } catch (err) {
+            console.warn(`[Fallback Warning] Model ${model} failed, trying next if available...`, err.message);
+            lastErr = err;
+        }
+    }
+    throw lastErr;
+}
+
+/**
+ * Try each LLM model in order, returning a stream.
+ * Returns { stream, model } for the first model that succeeds.
+ */
+async function callLLMStreamWithFallback(messages, max_tokens) {
+    let lastErr;
+    for (const model of LLM_MODELS) {
+        try {
+            const stream = await openai.chat.completions.create({
+                model,
+                messages,
+                max_tokens,
+                stream: true
+            });
+            return { stream, model };
+        } catch (err) {
+            console.warn(`[Stream Fallback] Model ${model} failed, trying next...`, err.message);
+            lastErr = err;
+        }
+    }
+    throw lastErr;
 }
 
 // ==========================================
@@ -162,7 +246,7 @@ module.exports.renderAgent = async (req, res) => {
     res.render('agent/agent.ejs', { conversations, profileImg });
 };
 
-// 2. HANDLE MESSAGE
+// 2. HANDLE MESSAGE (Streaming SSE)
 module.exports.handleMessage = async (req, res) => {
     try {
         const { message, conversationId } = req.body;
@@ -174,18 +258,25 @@ module.exports.handleMessage = async (req, res) => {
             return res.status(400).json({ error: 'Message is too long. Please keep it under 800 characters.' });
         }
 
-        let conversation;
-        if (conversationId) {
-            conversation = await Conversation.findOne({
-                _id: conversationId,
-                user: req.user._id
-            });
-        }
+        // ── OPTIMIZATION: Fire all independent DB/API calls simultaneously ──
+        // Conversation lookup, profile fetch, and embedding generation are all independent.
+        // Run them in parallel to save ~600-1000ms vs running them one by one.
+        const [existingConversation, userProfile, queryVector] = await Promise.all([
+            conversationId
+                ? Conversation.findOne({ _id: conversationId, user: req.user._id })
+                : Promise.resolve(null),
+            Profile.findOne({ user: req.user._id }),
+            generateEmbedding(message, 'query').catch(err => {
+                console.error('[Embedding] Failed:', err.message);
+                return null;
+            })
+        ]);
 
+        // Resolve conversation object (use existing or create new)
+        let conversation = existingConversation;
         if (!conversation) {
-            // New conversation — trigger summarization in background
+            // New conversation — trigger background summarization of old chats
             summarizeUnsummarizedChats(req.user._id).catch(e => console.error(e));
-
             conversation = new Conversation({
                 user: req.user._id,
                 title: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
@@ -194,51 +285,30 @@ module.exports.handleMessage = async (req, res) => {
             });
         }
 
-        // Build sliding window history (last 5 user + last 2 agent)
+        // Build chat history from existing messages (CPU-only, instant)
         const chatHistory = buildSlidingHistory(conversation.messages);
 
-        // Fetch User Profile for context
-        const userProfile = await Profile.findOne({ user: req.user._id });
+        // Resolve user context from profile
         const userContextInfo = userProfile && userProfile.agentContext
             ? userProfile.agentContext
             : 'No historical context gathered yet.';
         const userFullName = userProfile && userProfile.fullName ? userProfile.fullName : 'the user';
 
-        // --- LISTING SEARCH (Vector Semantic Search) ---
+        // ── Listing search (only runs now that we have the embedding) ──
         let matchedListingsDocs = [];
         let listingsContext = 'No specific listings matched the query.';
-        
+
         try {
-            // Embed the user's current message as a search query
-            const queryVector = await generateEmbedding(message, 'query');
-            
             if (queryVector) {
-                // Fetch all listings that have embeddings generated
-                const allListings = await Listing.find({ listingVector: { $exists: true, $ne: [] } })
-                    .select('title city listingType price rentalPeriod image searchContext listingVector');
-                
-                // Score listings by cosine similarity
-                const scoredListings = allListings.map(listing => {
-                    const score = cosineSimilarity(queryVector, listing.listingVector);
-                    return { listing, score };
-                });
-                
-                // Sort by highest similarity, filter by a reasonable threshold, take top 5
-                // Threshold of 0.3 is a starting point, adjust later if too strict/loose
-                matchedListingsDocs = scoredListings
-                    .filter(item => item.score > 0.3)
-                    .sort((a, b) => b.score - a.score)
-                    .slice(0, 5)
-                    .map(item => item.listing);
-                
+                matchedListingsDocs = await searchListings(queryVector);
                 if (matchedListingsDocs.length > 0) {
                     listingsContext = matchedListingsDocs.map(l => `[ID: ${l._id}] ${l.searchContext}`).join('\n\n');
                 }
             }
         } catch (searchErr) {
-            console.error('Vector search failed, proceeding without listings:', searchErr.message);
+            console.error('[Search] Vector search failed, proceeding without listings:', searchErr.message);
         }
-        
+
         const matchedListingIds = matchedListingsDocs.map(l => l._id);
         const matchedListingsPayload = matchedListingsDocs.map(l => ({
             _id: l._id,
@@ -261,42 +331,69 @@ ${listingsContext}
 
 If the user asks for a recommendation, refer to these listings. Mention details like price, city, or condition.`;
 
-        // Build messages array: system + history + current user message
         const messages = [
             { role: 'system', content: dynamicSystemPrompt },
             ...chatHistory,
             { role: 'user', content: message }
         ];
 
-        // Call OpenRouter
-        const result = await openai.chat.completions.create({
-            model: LLM_MODEL,
-            messages,
-            max_tokens: 500
-        });
+        // ── STREAMING RESPONSE via SSE ──
+        // Open a streaming connection to the LLM and pipe tokens to the browser
+        // as they arrive. This gives a near-instant perceived response time.
+        const { stream } = await callLLMStreamWithFallback(messages, 300);
 
-        const agentResponse = (result.choices && result.choices.length > 0 && result.choices[0].message && result.choices[0].message.content)
-            ? result.choices[0].message.content
-            : "I'm sorry, I couldn't generate a response from the AI provider. Please try again.";
+        // Set SSE headers — tells browser this is an event stream, not a regular response
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
 
-        // Only persist messages after a successful AI response (prevents orphaned user messages)
-        conversation.messages.push({ role: 'user', content: message, matchedListings: [] });
-        conversation.messages.push({ role: 'agent', content: agentResponse, matchedListings: matchedListingIds });
-        await conversation.save();
-
-        res.json({
-            response: agentResponse,
+        // Send metadata first (conversation ID, matched listings) so the client
+        // can update the sidebar even before the first token arrives
+        res.write(`data: ${JSON.stringify({
+            type: 'meta',
             conversationId: conversation._id,
             conversationTitle: conversation.title,
             matchedListings: matchedListingsPayload
-        });
+        })}\n\n`);
+
+        // Stream tokens as they arrive from the LLM
+        let fullResponse = '';
+        for await (const chunk of stream) {
+            const delta = chunk.choices[0]?.delta?.content || '';
+            if (delta) {
+                fullResponse += delta;
+                res.write(`data: ${JSON.stringify({ type: 'token', content: delta })}\n\n`);
+            }
+        }
+
+        // Signal stream end
+        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        res.end();
+
+        // Save to DB after stream completes (non-blocking from user perspective)
+        if (fullResponse.trim()) {
+            conversation.messages.push({ role: 'user', content: message, matchedListings: [] });
+            conversation.messages.push({ role: 'agent', content: fullResponse, matchedListings: matchedListingIds });
+            await conversation.save();
+        }
 
     } catch (err) {
         console.error('Agent error:', err.message || err);
-        if (err.status === 429 || (err.message && err.message.includes('429'))) {
-            return res.status(503).json({ error: 'AI is rate-limited. Please wait a moment and try again.' });
+
+        // If headers not sent yet, send a proper JSON error
+        if (!res.headersSent) {
+            if (err.status === 429 || (err.message && err.message.includes('429'))) {
+                return res.status(503).json({ error: 'AI is rate-limited. Please wait a moment and try again.' });
+            }
+            return res.status(500).json({ error: 'The agent encountered an error. Please try again.' });
         }
-        res.status(500).json({ error: 'The agent encountered an error. Please try again.' });
+
+        // If we are already streaming, send an error event and close
+        try {
+            res.write(`data: ${JSON.stringify({ type: 'error', message: 'Stream interrupted. Please try again.' })}\n\n`);
+            res.end();
+        } catch (_) {}
     }
 };
 

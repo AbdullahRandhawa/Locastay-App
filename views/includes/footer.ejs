@@ -1,22 +1,24 @@
-<footer>
-  <div class="container">
-    <div class="f-info">
-      <div class="f-info-socials">
-        <a href="#"><i class="fa-brands fa-facebook"></i></a>
-        <a href="#"><i class="fa-brands fa-instagram"></i></a>
-        <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+<footer class="site-footer mt-auto">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center py-4">
+      <div class="footer-legal mb-3 mb-md-0 text-center text-md-start">
+        <span class="copyright">&copy; <%= new Date().getFullYear() %> Rentlyst, Inc.</span>
+        <span class="d-none d-md-inline mx-2 text-muted">&middot;</span>
+        <a href="/terms" class="legal-link">Terms</a>
+        <span class="d-none d-md-inline mx-2 text-muted">&middot;</span>
+        <a href="/privacy" class="legal-link">Privacy</a>
+        <span class="d-none d-md-inline mx-2 text-muted">&middot;</span>
+        <a href="#" class="legal-link">Sitemap</a>
+        <span class="d-none d-md-inline mx-2 text-muted">&middot;</span>
+        <a href="#" class="legal-link">Help Center</a>
       </div>
 
-      <div class="f-info-links">
-        <a href="/privacy">Privacy</a>
-        <span class="text-muted d-none d-md-inline">&middot;</span>
-        <a href="/terms">Terms</a>
-        <span class="text-muted d-none d-md-inline">&middot;</span>
-        <a href="#">Sitemap</a>
-      </div>
-
-      <div class="f-info-brand mt-2 text-muted small">
-        &copy; <%= new Date().getFullYear() %> Rentlyst, Inc.
+      <div class="footer-socials d-flex flex-wrap justify-content-center align-items-center gap-2 gap-md-3">
+        <div class="d-flex gap-1 ms-2 ms-md-0">
+          <a href="#" class="social-icon" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+          <a href="#" class="social-icon" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" class="social-icon" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+        </div>
       </div>
     </div>
   </div>

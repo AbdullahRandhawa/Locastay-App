@@ -1,111 +1,144 @@
 <% layout("/layouts/boilerplate") %>
 
-<% const catMeta={ Item: { icon: 'fa-box-open', label: 'Items' }, Vehicle: { icon: 'fa-car', label: 'Vehicles' }, Property: { icon: 'fa-house', label: 'Properties' }, Service: { icon: 'fa-wrench', label: 'Services' } }; %>
+    <% const catMeta={ Item: { icon: 'fa-box-open' , label: 'Items' }, Vehicle: { icon: 'fa-car' , label: 'Vehicles' },
+        Property: { icon: 'fa-house' , label: 'Properties' }, Service: { icon: 'fa-wrench' , label: 'Services' } }; %>
 
-<!-- Filter Bar -->
-<div class="search-bar mb-3" style="padding: 0.3rem 0.5rem 0.3rem 0.5rem;">
-    <div class="dropdown flex-shrink-0">
-        <button class="search-btn dropdown-toggle d-flex align-items-center gap-2" type="button" id="catDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fa-solid fa-sliders" id="catIcon"></i>
-            <span id="catLabel">All Listings</span>
-        </button>
-        <ul class="dropdown-menu mt-1">
-            <li><a class="dropdown-item cat-option" href="#" data-cat="" data-icon="fa-sliders" data-label="All Listings">All Listings</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <% for(let [cat, meta] of Object.entries(catMeta)) { %>
-            <li><a class="dropdown-item cat-option" href="#" data-cat="<%= cat %>" data-icon="<%= meta.icon %>" data-label="<%= meta.label %>"><i class="fa-solid <%= meta.icon %> me-2"></i><%= meta.label %></a></li>
-            <% } %>
-        </ul>
-    </div>
-    <div class="vr mx-2 flex-shrink-0" style="height:1.4rem; align-self:center;"></div>
-    <div class="d-flex gap-2 flex-nowrap overflow-auto filter-strip" id="subcatRow"></div>
-</div>
-
-<!-- Listings Grid -->
-<div class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-1 g-4">
-<% for(let listing of allListings){ %>
-<div class="col listing-item" data-category="<%= listing.mainCategory %>" data-subcategory="<%= listing.subCategory %>">
-    <a href="/listings/<%= listing._id %>" class="listing-link">
-        <div class="listing-card">
-            <div class="listing-img-container position-relative">
-                <img src="<%= listing.image && listing.image.length > 0 ? listing.image[0].url : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800' %>" class="card-img-top" alt="<%= listing.title %>">
-                <% if(listing.listingType) { %>
-                <span class="position-absolute top-0 end-0 m-2 badge bg-<%= listing.listingType === 'Rent' ? 'warning text-dark' : 'success' %>" style="font-size:0.7rem;"><%= listing.listingType %></span>
-                <% } %>
+        <!-- Filter Bar -->
+        <div class="search-bar mb-3" style="margin-top: -1rem; padding: 0.3rem 0.5rem 0.3rem 0.5rem;">
+            <div class="dropdown flex-shrink-0">
+                <button class="search-btn dropdown-toggle d-flex align-items-center gap-2" type="button"
+                    id="catDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-sliders" id="catIcon"></i>
+                    <span id="catLabel">All Listings</span>
+                </button>
+                <ul class="dropdown-menu mt-1">
+                    <li><a class="dropdown-item cat-option" href="#" data-cat="" data-icon="fa-sliders"
+                            data-label="All Listings">All Listings</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <% for(let [cat, meta] of Object.entries(catMeta)) { %>
+                        <li><a class="dropdown-item cat-option" href="#" data-cat="<%= cat %>"
+                                data-icon="<%= meta.icon %>" data-label="<%= meta.label %>"><i
+                                    class="fa-solid <%= meta.icon %> me-2"></i>
+                                <%= meta.label %>
+                            </a></li>
+                        <% } %>
+                </ul>
             </div>
-            <div class="mt-2">
-                <div class="d-flex align-items-center gap-1 mb-1">
-                    <% if(listing.mainCategory) { %><span class="badge rounded-pill" style="background:rgba(0,0,0,0.07); color:var(--text-muted); font-size:0.65rem; font-weight:600;"><%= listing.mainCategory %></span><% } %>
-                    <% if(listing.subCategory) { %><span class="badge rounded-pill" style="background:rgba(255,56,92,0.1); color:var(--primary); font-size:0.65rem; font-weight:600;"><%= listing.subCategory %></span><% } %>
-                </div>
-                <p class="fw-semibold mb-0 text-truncate" style="font-size:0.95rem; color:var(--text-dark);"><%= listing.title %></p>
-                <p class="text-muted mb-1" style="font-size:0.82rem;"><i class="fa-solid fa-location-dot me-1"></i><%= listing.city %>, <%= listing.country %></p>
-                <p class="fw-semibold mb-0" style="color:var(--text-dark); font-size:0.95rem;">&#8360; <%= listing.price.toLocaleString('en-PK') %>
-                    <% if(listing.listingType==='Rent' && listing.rentalPeriod && listing.rentalPeriod !=='N/A') { %><span class="fw-normal text-muted" style="font-size:0.82rem;">/ <%= listing.rentalPeriod %></span><% } %>
-                </p>
-            </div>
+            <div class="vr mx-2 flex-shrink-0" style="height:1.4rem; align-self:center;"></div>
+            <div class="d-flex gap-2 flex-nowrap overflow-auto filter-strip" id="subcatRow"></div>
         </div>
-    </a>
-</div>
-<% } %>
-</div>
 
-<div id="sentinel" class="text-center py-4 text-muted small">Loading more...</div>
+        <!-- Listings Grid -->
+        <div class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-1 g-4">
+            <% for(let listing of allListings){ %>
+                <div class="col listing-item" data-category="<%= listing.mainCategory %>"
+                    data-subcategory="<%= listing.subCategory %>">
+                    <a href="/listings/<%= listing._id %>" class="listing-link">
+                        <div class="listing-card">
+                            <div class="listing-img-container position-relative">
+                                <img src="<%= listing.image && listing.image.length > 0 ? listing.image[0].url : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800' %>"
+                                    class="card-img-top" alt="<%= listing.title %>">
+                                <% if(listing.listingType) { %>
+                                    <span
+                                        class="position-absolute top-0 end-0 m-2 badge bg-<%= listing.listingType === 'Rent' ? 'warning text-dark' : 'success' %>"
+                                        style="font-size:0.7rem;">
+                                        <%= listing.listingType %>
+                                    </span>
+                                    <% } %>
+                            </div>
+                            <div class="mt-2">
+                                <div class="d-flex align-items-center gap-1 mb-1">
+                                    <% if(listing.mainCategory) { %><span class="badge rounded-pill"
+                                            style="background:rgba(0,0,0,0.07); color:var(--text-muted); font-size:0.65rem; font-weight:600;">
+                                            <%= listing.mainCategory %>
+                                        </span>
+                                        <% } %>
+                                            <% if(listing.subCategory) { %><span class="badge rounded-pill"
+                                                    style="background:rgba(255,56,92,0.1); color:var(--primary); font-size:0.65rem; font-weight:600;">
+                                                    <%= listing.subCategory %>
+                                                </span>
+                                                <% } %>
+                                </div>
+                                <p class="fw-semibold mb-0 text-truncate"
+                                    style="font-size:0.95rem; color:var(--text-dark);">
+                                    <%= listing.title %>
+                                </p>
+                                <p class="text-muted mb-1" style="font-size:0.82rem;"><i
+                                        class="fa-solid fa-location-dot me-1"></i>
+                                    <%= listing.city %>, <%= listing.country %>
+                                </p>
+                                <p class="fw-semibold mb-0" style="color:var(--text-dark); font-size:0.95rem;">&#8360;
+                                    <%= listing.price.toLocaleString('en-PK') %>
+                                        <% if(listing.listingType==='Rent' && listing.rentalPeriod &&
+                                            listing.rentalPeriod !=='N/A' ) { %><span class="fw-normal text-muted"
+                                                style="font-size:0.82rem;">/ <%= listing.rentalPeriod %></span>
+                                            <% } %>
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <% } %>
+        </div>
 
-<script id="catsData" type="application/json"><%- JSON.stringify(CATEGORIES) %></script>
+        <div id="sentinel" class="text-center py-4 text-muted small">Loading more...</div>
 
-<script>
-const CATS = JSON.parse(document.getElementById('catsData').textContent);
-const BATCH = 12;
-const allItems = Array.from(document.querySelectorAll('.listing-item'));
-let activeCat = '', activeSub = '', pool = [], offset = 0;
+        <script id="catsData" type="application/json"><%- JSON.stringify(CATEGORIES) %></script>
 
-function buildPool() {
-    return allItems.filter(el => {
-        if (activeCat && el.dataset.category !== activeCat) return false;
-        if (activeSub && el.dataset.subcategory !== activeSub) return false;
-        return true;
-    });
-}
-function showBatch() {
-    pool.slice(offset, offset + BATCH).forEach(el => el.classList.remove('d-none'));
-    offset = Math.min(offset + BATCH, pool.length);
-    document.getElementById('sentinel').style.display = offset >= pool.length ? 'none' : '';
-}
-function render() {
-    allItems.forEach(el => el.classList.add('d-none'));
-    pool = buildPool(); offset = 0;
-    showBatch();
-    renderSubcats();
-}
-function renderSubcats() {
-    const row = document.getElementById('subcatRow');
-    row.innerHTML = '';
-    if (!activeCat || !CATS[activeCat]) return;
-    row.appendChild(makeChip('All ' + activeCat + 's', '', !activeSub));
-    CATS[activeCat].forEach(sub => row.appendChild(makeChip(sub, sub, activeSub === sub)));
-}
-function makeChip(label, value, isActive) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'btn nav-pill flex-shrink-0' + (isActive ? ' active' : '');
-    btn.textContent = label;
-    btn.addEventListener('click', () => { activeSub = value; render(); });
-    return btn;
-}
-document.querySelectorAll('.cat-option').forEach(item => {
-    item.addEventListener('click', e => {
-        e.preventDefault();
-        activeCat = item.dataset.cat;
-        activeSub = '';
-        document.getElementById('catIcon').className = 'fa-solid ' + item.dataset.icon;
-        document.getElementById('catLabel').textContent = item.dataset.label;
-        render();
-    });
-});
-new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting && offset < pool.length) showBatch();
-}, { rootMargin: '200px' }).observe(document.getElementById('sentinel'));
+        <script>
+            const CATS = JSON.parse(document.getElementById('catsData').textContent);
+            const BATCH = 12;
+            const allItems = Array.from(document.querySelectorAll('.listing-item'));
+            let activeCat = '', activeSub = '', pool = [], offset = 0;
 
-render();
-</script>
+            function buildPool() {
+                return allItems.filter(el => {
+                    if (activeCat && el.dataset.category !== activeCat) return false;
+                    if (activeSub && el.dataset.subcategory !== activeSub) return false;
+                    return true;
+                });
+            }
+            function showBatch() {
+                pool.slice(offset, offset + BATCH).forEach(el => el.classList.remove('d-none'));
+                offset = Math.min(offset + BATCH, pool.length);
+                document.getElementById('sentinel').style.display = offset >= pool.length ? 'none' : '';
+            }
+            function render() {
+                allItems.forEach(el => el.classList.add('d-none'));
+                pool = buildPool(); offset = 0;
+                showBatch();
+                renderSubcats();
+            }
+            function renderSubcats() {
+                const row = document.getElementById('subcatRow');
+                row.innerHTML = '';
+                if (!activeCat || !CATS[activeCat]) return;
+                row.appendChild(makeChip('All ' + activeCat + 's', '', !activeSub));
+                CATS[activeCat].forEach(sub => row.appendChild(makeChip(sub, sub, activeSub === sub)));
+            }
+            function makeChip(label, value, isActive) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn nav-pill flex-shrink-0' + (isActive ? ' active' : '');
+                btn.textContent = label;
+                btn.addEventListener('click', () => { activeSub = value; render(); });
+                return btn;
+            }
+            document.querySelectorAll('.cat-option').forEach(item => {
+                item.addEventListener('click', e => {
+                    e.preventDefault();
+                    activeCat = item.dataset.cat;
+                    activeSub = '';
+                    document.getElementById('catIcon').className = 'fa-solid ' + item.dataset.icon;
+                    document.getElementById('catLabel').textContent = item.dataset.label;
+                    render();
+                });
+            });
+            new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting && offset < pool.length) showBatch();
+            }, { rootMargin: '200px' }).observe(document.getElementById('sentinel'));
+
+            render();
+        </script>

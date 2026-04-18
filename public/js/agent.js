@@ -42,7 +42,7 @@
         if (!counter) {
             counter = document.createElement('span');
             counter.id = 'charCounter';
-            counter.style.cssText = 'font-size:11px;position:absolute;bottom:10px;right:48px;opacity:0.5;pointer-events:none;';
+            counter.style.cssText = 'font-size:11px;position:absolute;bottom:14px;right:60px;opacity:0.5;pointer-events:none;';
             chatInput.parentElement.style.position = 'relative';
             chatInput.parentElement.appendChild(counter);
         }
@@ -119,6 +119,7 @@
     // TOAST HELPER
     // ==========================================
 
+
     function showToast(message, type = 'error') {
         const toast = document.createElement('div');
         toast.textContent = message;
@@ -141,102 +142,119 @@
         const message = chatInput.value.trim();
         if (!message) return;
 
-        // Hide welcome
+        // Hide welcome screen
         if (welcomeScreen) welcomeScreen.style.display = 'none';
 
-        // Show user message
+        // Show user message immediately
         appendMessage('user', message);
 
         // Clear input
         chatInput.value = '';
         chatInput.style.height = 'auto';
+        const counter = document.getElementById('charCounter');
+        if (counter) counter.textContent = '';
         sendBtn.disabled = true;
         isLoading = true;
 
-        // Show typing indicator
+        // Show typing indicator while waiting for first token
         const typing = showTyping();
+
+        let agentBubble = null; // The live streaming bubble
 
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
 
             const res = await fetch('/agent/message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message,
-                    conversationId: currentConversationId
-                }),
+                body: JSON.stringify({ message, conversationId: currentConversationId }),
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
 
-            if (res.status === 401) {
+            // Handle non-streaming error responses (401, 503, 500 etc.)
+            if (!res.ok || res.headers.get('Content-Type')?.includes('application/json')) {
+                const errData = await res.json().catch(() => ({}));
                 typing.remove();
-                appendMessage('agent', 'You need to be logged in to use the agent. Please [log in](/login).');
+                if (res.status === 401) {
+                    appendMessage('agent', 'You need to be logged in to use the agent. Please log in first.');
+                } else {
+                    appendMessage('agent', errData.error || 'Sorry, I encountered an error. Please try again.');
+                }
                 isLoading = false;
                 return;
             }
 
-            if (res.status === 503) {
-                typing.remove();
-                const errData = await res.json().catch(() => ({}));
-                appendMessage('agent', errData.error || 'The AI is currently rate-limited. Please wait a moment and try again.');
-                isLoading = false;
-                return;
+            // --- Stream reading loop ---
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let rawText = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    let event;
+                    try { event = JSON.parse(line.slice(6)); } catch { continue; }
+
+                    if (event.type === 'meta') {
+                        currentConversationId = event.conversationId;
+                        updateHistory(event.conversationId, event.conversationTitle);
+                        if (event.matchedListings && event.matchedListings.length > 0) {
+                            updateListingsSidebar(event.matchedListings);
+                        }
+
+                    } else if (event.type === 'token') {
+                        if (!agentBubble) {
+                            typing.remove();
+                            agentBubble = createStreamingBubble();
+                        }
+                        rawText += event.content;
+                        agentBubble.textContent = rawText;
+                        scrollToBottom();
+
+                    } else if (event.type === 'done') {
+                        if (agentBubble) {
+                            agentBubble.innerHTML = parseMarkdown(rawText);
+                        }
+                        scrollToBottom();
+
+                    } else if (event.type === 'error') {
+                        if (agentBubble) {
+                            agentBubble.textContent = event.message || 'Stream interrupted. Please try again.';
+                        } else {
+                            typing.remove();
+                            appendMessage('agent', event.message || 'Stream interrupted. Please try again.');
+                        }
+                    }
+                }
             }
-
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.error || 'Server error');
-            }
-
-            const data = await res.json();
-
-            // Remove typing
-            typing.remove();
-
-            // Update conversation ID
-            currentConversationId = data.conversationId;
-
-            // Show agent response
-            appendMessage('agent', data.response);
-
-            // Update listings sidebar — only replace if new matches came in
-            if (data.matchedListings && data.matchedListings.length > 0) {
-                updateListingsSidebar(data.matchedListings);
-            }
-
-            // Update history sidebar
-            updateHistory(data.conversationId, data.conversationTitle);
 
         } catch (err) {
-            typing.remove();
+            if (!agentBubble) typing.remove();
             if (err.name === 'AbortError') {
                 appendMessage('agent', 'The request timed out. The AI may be busy — please try again in a moment.');
             } else {
                 appendMessage('agent', 'Sorry, I encountered an error. Please try again.');
             }
-            console.error('Agent error:', err);
+            console.error('Agent stream error:', err);
         }
 
         isLoading = false;
     }
 
+
     function appendMessage(role, content) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${role}-message`;
-
-        const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        if (role === 'agent') {
-            avatar.innerHTML = 'R';
-        } else {
-            const img = document.createElement('img');
-            img.src = window.__USER_PROFILE_IMG__ || '';
-            img.alt = 'You';
-            avatar.appendChild(img);
-        }
 
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
@@ -247,19 +265,35 @@
             bubble.textContent = content;
         }
 
-        msgDiv.appendChild(avatar);
         msgDiv.appendChild(bubble);
         chatMessages.appendChild(msgDiv);
         scrollToBottom();
     }
 
+    /**
+     * Creates an empty agent message bubble in the DOM and returns a reference
+     * to the inner bubble element so the stream loop can update it in real time.
+     */
+    function createStreamingBubble() {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'message agent-message';
+
+        // No avatar for agent — bubble only
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble streaming';
+
+        msgDiv.appendChild(bubble);
+        chatMessages.appendChild(msgDiv);
+        scrollToBottom();
+
+        return bubble;
+    }
+
+
     function showTyping() {
         const div = document.createElement('div');
         div.className = 'typing-indicator';
         div.innerHTML = `
-            <div class="message-avatar" style="background: var(--primary); color: #fff; font-weight: bold; justify-content: center; align-items: center; display: flex;">
-                R
-            </div>
             <div class="typing-dots">
                 <span></span><span></span><span></span>
             </div>
@@ -444,20 +478,20 @@
         // Re-add welcome
         chatMessages.innerHTML = `
             <div class="welcome-screen" id="welcomeScreen">
-                <h4>Hey there! I'm your Rentlyst Agent</h4>
-                <p>I know every listing on the platform. Ask me anything — I can help you find deals, compare options, and discover what you need.</p>
+                <h4>Hey! I'm your Rentlyst Assistant </h4>
+                <p>I can help you find anything on the platform — from cars and electronics to apartments and services. Just ask!</p>
                 <div class="quick-actions">
-                    <button class="quick-btn" data-query="Show me the best cars available">
-                        <i class="fa-solid fa-car"></i> Best cars
+                    <button class="quick-btn" data-query="What vehicles are available for rent or sale?">
+                        <i class="fa-solid fa-car"></i> Find Vehicles
                     </button>
-                    <button class="quick-btn" data-query="What apartments are available for rent?">
-                        <i class="fa-solid fa-building"></i> Apartments for rent
+                    <button class="quick-btn" data-query="Show me available properties and apartments">
+                        <i class="fa-solid fa-building"></i> Browse Properties
                     </button>
-                    <button class="quick-btn" data-query="Find me cheap electronics under 5000">
-                        <i class="fa-solid fa-laptop"></i> Cheap electronics
+                    <button class="quick-btn" data-query="What electronics or gadgets are listed for sale?">
+                        <i class="fa-solid fa-mobile-screen"></i> Electronics &amp; Gadgets
                     </button>
-                    <button class="quick-btn" data-query="What services are available?">
-                        <i class="fa-solid fa-wrench"></i> Services
+                    <button class="quick-btn" data-query="What services are available on the platform?">
+                        <i class="fa-solid fa-screwdriver-wrench"></i> Available Services
                     </button>
                 </div>
             </div>

@@ -11,16 +11,22 @@ body:has(.agent-container) .container.flex-grow-1 {
     margin: 0 !important;
     padding: 0 !important;
     max-width: 100% !important;
+    height: calc(100vh - 67px) !important;
+}
 
+body:has(.agent-container) .container.flex-grow-1>br,
+body:has(.agent-container) .container.flex-grow-1>.row {
+    display: none !important;
 }
 
 /* --- Layout: Three-Panel Split --- */
 .agent-container {
     display: flex;
-    height: calc(100vh - 67px);
-    margin: -1.5rem calc(-50vw + 50%) 0 calc(-50vw + 50%);
+    height: calc(100vh - 57PX);
+    margin: 0;
     overflow: hidden;
     background: #f0f2f5;
+    position: relative;
 }
 
 /* --- History Sidebar (Left) --- */
@@ -741,7 +747,7 @@ body:has(.agent-container) .container.flex-grow-1 {
 /* --- Mobile Overlay --- */
 .sidebar-overlay {
     display: none;
-    position: fixed;
+    position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
     z-index: 99;
@@ -755,7 +761,7 @@ body:has(.agent-container) .container.flex-grow-1 {
 /* --- Responsive --- */
 @media (max-width: 991px) {
     .agent-history {
-        position: fixed;
+        position: absolute;
         left: 0;
         top: 0;
         bottom: 0;
@@ -769,7 +775,7 @@ body:has(.agent-container) .container.flex-grow-1 {
     }
 
     .agent-listings {
-        position: fixed;
+        position: absolute;
         right: 0;
         top: 0;
         bottom: 0;

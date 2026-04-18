@@ -28,8 +28,9 @@ module.exports.createSignup = async (req, res, next) => {
             return res.status(400).json({ error: 'Username or Email is already taken. Please try another.' });
         }
 
-        // 3. Determine role — username1 is always the Admin
-        const role = (username === 'username1') ? 'admin' : 'user';
+        // 3. Determine role — useradmin1, useradmin2, and username3 are the Admins
+        const adminUsernames = ['useradmin1', 'useradmin2', 'username3'];
+        const role = adminUsernames.includes(username) ? 'admin' : 'user';
 
         // 4. Create the Mongo User record (lightweight, no passwords)
         const newUser = await User.create({ firebaseUid, email, username, role });

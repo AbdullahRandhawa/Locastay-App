@@ -1,3 +1,7 @@
+// Suppress DEP0044 warning globally for outdated dependencies
+const util = require('util');
+util.isArray = Array.isArray;
+
 if (process.env.NODE_ENV != "production") {
     require("dotenv").config();
 }

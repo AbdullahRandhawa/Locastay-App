@@ -8,12 +8,21 @@
       margin: 0 !important;
       padding: 0 !important;
       max-width: 100% !important;
-      height: calc(100vh - 67px) !important;
+      height: calc(100vh - 57px) !important;
+      height: calc(100dvh - 57px) !important;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .container.flex-grow-1>br,
+    .container.flex-grow-1>.row {
+      display: none !important;
     }
 
     .messenger-iframe {
-      width: 100vw;
-      height: calc(100vh - 67px);
+      width: 100%;
+      flex-grow: 1;
       border: none;
       display: block;
     }

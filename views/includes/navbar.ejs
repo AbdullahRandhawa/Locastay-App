@@ -2,39 +2,43 @@
 <div class="nav-backdrop" id="navBackdrop"></div>
 
 <nav class="navbar sticky-top">
-  <div class="container-fluid px-3 px-lg-4 d-flex align-items-center gap-2">
+  <div class="container-fluid px-2 px-lg-4 d-flex align-items-center justify-content-between gap-3">
 
-    <!-- Brand -->
-    <a class="navbar-brand d-flex align-items-center  me-2" href="/listings">
-      <i class="fa-solid fa-house"></i>
-      <span class="brand-text">Rentlyst</span>
-    </a>
-
-    <!-- Left Links: Explore (visible) + Add Listing (desktop only) -->
-    <div class="d-flex align-items-center gap-1 gap-md-3 ms-1 mx-md-3">
-      <a class="nav-link nav-pill" href="/listings"><i class="fa-solid fa-compass fa-xl"></i><span
-          class="d-none d-lg-inline ms-1">Explore</span></a>
-      <a class="nav-link nav-pill " href="/listings/new"><i class="fa-solid fa-plus fa-xl"></i><span
-          class="d-none d-lg-inline ms-1">Add Listing</span></a>
-      <!-- d-none d-md-flex align-items-center -->
+    <!-- Left Div: Brand -->
+    <div class="d-flex align-items-center">
+      <a class="navbar-brand d-flex align-items-center m-0" href="/listings">
+        <i class="fa-solid fa-house"></i>
+        <span class="brand-text ms-2">Rentlyst</span>
+      </a>
     </div>
 
-    <!-- Center: Search Bar (visible md+) -->
-    <form class="search-bar d-none d-md-flex mx-auto" role="search" method="GET" action="/listings/search">
-      <input class="form-control search-input" type="search" placeholder="Search listings..." name="q" />
-      <button class="btn search-btn" type="submit">
-        <i class="fa-solid fa-magnifying-glass "></i>
-      </button>
-    </form>
+    <!-- Middle Div: Search Bar (Center, visible md+) -->
+    <div class="d-none d-md-flex align-items-center mx-auto" style="flex: 0 1 350px; min-width: 70px;">
+      <form class="search-bar w-100 m-0" role="search" method="GET" action="/listings/search">
+        <input class="form-control search-input" type="search" placeholder="Search listings..." name="q" />
+        <button class="btn search-btn" type="submit">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </form>
+    </div>
 
-    <!-- Right: Auth links + user menu -->
-    <div class="d-flex align-items-center gap-1 gap-md-3 ms-auto mx-md-3">
+    <!-- Right Section: All Links + Auth + User Menu -->
+    <div class="d-flex align-items-center gap-1 gap-md-3 ">
+
+      <!-- Primary Links (Moved from left) -->
+      <a class="nav-link nav-pill" href="/listings"><i class="fa-solid fa-compass fa-lg"></i><span
+          class="d-none d-lg-inline ms-1">Explore</span></a>
+      <a class="nav-link nav-pill d-none d-md-flex align-items-center" href="/listings/new"><i
+          class="fa-solid fa-plus fa-lg"></i><span class="d-none d-lg-inline ms-1">Add Listing</span></a>
+
+      <!-- Auth Links -->
       <% if(currUser) { %>
-        <a class="nav-link nav-pill" href="/messages"><i class="fa-regular fa-comment-dots fa-xl"></i><span
+        <a class="nav-link nav-pill" href="/messages"><i class="fa-regular fa-comment-dots fa-lg"></i><span
             class="d-none d-lg-inline ms-1">Messages</span></a>
         <a class="nav-link nav-pill" href="/agent"><i class="fa-solid fa-robot fa-lg"></i><span
             class="d-none d-lg-inline ms-1">Ask Rentlyst</span></a>
         <% } %>
+
           <% if(!currUser) { %>
             <a class="nav-link nav-pill d-none d-md-flex" href="/signup"><i class="fa-solid fa-user-plus"></i><span
                 class="d-none d-lg-inline ms-1">Sign up</span></a>
@@ -71,16 +75,6 @@
                 <!-- Mobile Avatar Hamburger -->
                 <div class="mobile-avatar-pill d-md-none ms-1" id="mobileMenuBtn">
                   <i class="fa-solid fa-bars"></i>
-                  <!-- <div class="host-avatar"
-                    style="width:28px;height:28px;font-size:0.8rem;overflow:hidden;border-radius:50%;">
-                    <% if(locals.currProfile && currProfile.profileImg && currProfile.profileImg.url &&
-                      !currProfile.profileImg.url.includes('pexels.com')) { %>
-                      <img src="<%= currProfile.profileImg.url %>" alt="Profile"
-                        style="width:100%;height:100%;object-fit:cover;">
-                      <% } else { %>
-                        <%= currUser.username ? currUser.username.charAt(0).toUpperCase() : 'U' %>
-                          <% } %>
-                  </div> -->
                 </div>
                 <% } else { %>
                   <!-- Mobile Login Hamburger -->
@@ -142,5 +136,19 @@
     if (btn) btn.addEventListener('click', openDrawer);
     if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
     if (backdrop) backdrop.addEventListener('click', closeDrawer);
+
+    // Apply active class to the current page link so it stays active
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.nav-pill, .drawer-link');
+    navLinks.forEach(link => {
+      const href = link.getAttribute('href');
+      if (href) {
+        if (currentPath === href) {
+          link.classList.add('active');
+        } else if (href === '/listings' && currentPath.startsWith('/listings') && !currentPath.includes('/new') && !currentPath.includes('/search')) {
+          link.classList.add('active');
+        }
+      }
+    });
   })();
 </script>

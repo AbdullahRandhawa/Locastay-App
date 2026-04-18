@@ -1,20 +1,31 @@
 <% layout("/layouts/boilerplate") %>
   <style>
-    body {
+    /* Make the page body a locked flex column so the iframe fills all space below the navbar */
+    html, body {
+      height: 100% !important;
       overflow: hidden !important;
+      margin: 0 !important;
+      padding: 0 !important;
     }
 
+    body {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    /* Remove Bootstrap mb-4 and reset the container so it fills remaining height */
     .container.flex-grow-1 {
       margin: 0 !important;
       padding: 0 !important;
       max-width: 100% !important;
-      height: calc(100vh - 57px) !important;
-      height: calc(100dvh - 57px) !important;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      flex: 1 1 0 !important;
+      min-height: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
     }
 
+    /* Hide the flash injected elements */
     .container.flex-grow-1>br,
     .container.flex-grow-1>.row {
       display: none !important;
@@ -22,7 +33,8 @@
 
     .messenger-iframe {
       width: 100%;
-      flex-grow: 1;
+      flex: 1 1 0;
+      min-height: 0;
       border: none;
       display: block;
     }

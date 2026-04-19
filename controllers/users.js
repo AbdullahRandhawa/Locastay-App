@@ -83,7 +83,7 @@ module.exports.createSignup = async (req, res, next) => {
         });
 
         req.flash("success", "Welcome! Your account is ready.");
-        return res.status(200).json({ redirect: '/listings' });
+        return res.status(200).json({ redirect: '/explore' });
 
     } catch (e) {
         console.error("Signup Error:", e);
@@ -132,7 +132,7 @@ module.exports.login = async (req, res) => {
         });
 
         req.flash("success", "Welcome back to Rentlyst!");
-        const redirectUrl = req.session.returnTo || '/listings';
+        const redirectUrl = req.session.returnTo || '/explore';
         delete req.session.returnTo;
         return res.status(200).json({ redirect: redirectUrl });
 
@@ -147,7 +147,7 @@ module.exports.logout = async (req, res, next) => {
     res.clearCookie('__session');
     res.clearCookie('fbToken');
     req.flash("success", "You are logged out!");
-    res.redirect('/listings');
+    res.redirect('/explore');
 }
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────

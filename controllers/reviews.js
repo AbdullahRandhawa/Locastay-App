@@ -97,15 +97,15 @@ module.exports.createReview = async (req, res, next) => {
 
     if (!rating || isNaN(parsedRating) || parsedRating < 1 || parsedRating > 5) {
         req.flash('error', 'Rating must be a number between 1 and 5.');
-        return res.redirect(`/listings/${req.params.id}`);
+        return res.redirect(`/explore/${req.params.id}`);
     }
     if (!comment || typeof comment !== 'string' || comment.trim().length === 0) {
         req.flash('error', 'Review comment cannot be empty.');
-        return res.redirect(`/listings/${req.params.id}`);
+        return res.redirect(`/explore/${req.params.id}`);
     }
     if (comment.trim().length > 1000) {
         req.flash('error', 'Review comment must be 1000 characters or fewer.');
-        return res.redirect(`/listings/${req.params.id}`);
+        return res.redirect(`/explore/${req.params.id}`);
     }
 
     const listing = await Listing.findById(req.params.id);
@@ -126,7 +126,7 @@ module.exports.createReview = async (req, res, next) => {
     );
 
     req.flash('success', 'Review added successfully!');
-    res.redirect(`/listings/${req.params.id}`);
+    res.redirect(`/explore/${req.params.id}`);
 }
 
 
@@ -136,5 +136,5 @@ module.exports.deleteReview = async (req, res, next) => {
     await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
     await Review.findByIdAndDelete(reviewId);
     req.flash("success", "Review deleted successfuly!");
-    res.redirect(`/listings/${id}`);
+    res.redirect(`/explore/${id}`);
 }

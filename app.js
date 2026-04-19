@@ -23,12 +23,13 @@ const flash = require('connect-flash');
 const Profile = require('./models/profile');
 
 
-const listingRoute = require('./routes/listing.js');
+const exploreRoute = require('./routes/explore.js');
 const reviewRoute = require('./routes/review.js');
 const userRoute = require('./routes/user.js');
 const profileRoute = require('./routes/profile.js');
 const agentRoute = require('./routes/agent.js');
 
+const homeRoute = require('./routes/home.js');
 const User = require("./models/user.js");
 const asyncWrap = require("./utils/asyncWrap.js");
 
@@ -137,8 +138,9 @@ app.use(async (req, res, next) => {
 });
 
 
-app.use('/listings', listingRoute);
-app.use('/listings/:id/reviews', reviewRoute);
+app.use('/', homeRoute);
+app.use('/explore', exploreRoute);
+app.use('/explore/:id/reviews', reviewRoute);
 app.use('/', userRoute);
 app.use('/agent', agentRoute);
 app.use('/profile', profileRoute);
@@ -153,14 +155,12 @@ app.get('/messages', isLoggedIn, async (req, res) => {
     } catch (err) {
         console.error("Error generating token for messages iframe:", err);
         req.flash('error', 'Could not load messenger.');
-        res.redirect('/listings');
+        res.redirect('/explore');
     }
 });
 
-//Root----------------------
-app.get('/', (req, res) => {
-    res.redirect('/listings');
-});
+// const listingController = require('./controllers/explore.js'); // removed unused
+// app.get('/', asyncWrap(listingController.renderHome)); // Handled by homeRoute
 
 const multer = require('multer');
 const { storage, cloudinary } = require('./cloudConfig.js');

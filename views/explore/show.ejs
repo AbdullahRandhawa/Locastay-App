@@ -1,0 +1,334 @@
+<% layout("/layouts/boilerplate") %>
+
+<div id="listing-data" data-listing="<%= JSON.stringify(idListing) %>" style="display:none"></div>
+<script>
+  window.mapToken = "<%= process.env.MAP_TOKEN %>";
+  window.listing = JSON.parse(document.getElementById('listing-data').dataset.listing);
+</script>
+<script>window.onload = function () { window.scrollTo(0, 0); };</script>
+
+<div class="row">
+
+  <!-- ── HEADER ── -->
+  <div class="col-10 col-lg-8 col-md-10 offset-1 offset-lg-2 offset-md-1">
+    <br />
+    <div class="show-header">
+      <h3><%= idListing.title %></h3>
+      <p class="text-muted"><%= idListing.city %>, <%= idListing.country %></p>
+      <div class="d-flex flex-wrap gap-2 mb-2">
+        <% if(idListing.mainCategory) { %>
+          <span class="badge badge-category"><%= idListing.mainCategory %></span>
+        <% } %>
+        <% if(idListing.subCategory) { %>
+          <span class="badge badge-sub"><%= idListing.subCategory %></span>
+        <% } %>
+        <% if(idListing.listingType) { %>
+          <span class="badge <%= idListing.listingType === 'Rent' ? 'badge-rent' : 'badge-sale' %>">
+            For <%= idListing.listingType %>
+          </span>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── IMAGE ── -->
+  <div class="col-12 col-lg-8 col-md-10 offset-lg-2 offset-md-1">
+
+    <div class="show-img-container">
+      <% if(idListing.image && idListing.image.length > 1) { %>
+        <div id="listingCarousel" class="carousel slide h-100" data-bs-ride="false">
+          <div class="carousel-inner h-100">
+            <% idListing.image.forEach((image, index) => { %>
+              <div class="carousel-item h-100 <%= index === 0 ? 'active' : '' %>">
+                <img src="<%= image.url %>" class="show-img" alt="listing image <%= index + 1 %>">
+              </div>
+            <% }); %>
+          </div>
+          <button class="carousel-control-prev" type="button"
+                  data-bs-target="#listingCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button"
+                  data-bs-target="#listingCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+          <span class="gallery-counter" id="galleryCounter">1 / <%= idListing.image.length %></span>
+        </div>
+
+      <% } else if(idListing.image && idListing.image.length === 1) { %>
+        <img src="<%= idListing.image[0].url %>" class="show-img" alt="listing image">
+
+      <% } else { %>
+        <img src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=1200"
+             class="show-img" alt="placeholder">
+      <% } %>
+    </div>
+
+    <!-- Thumbnail strip (only if multiple images) -->
+    <% if(idListing.image && idListing.image.length > 1) { %>
+      <div class="gallery-thumbs" id="galleryThumbs">
+        <% idListing.image.forEach((image, index) => { %>
+          <div class="gallery-thumb <%= index === 0 ? 'active' : '' %>"
+               data-bs-target="#listingCarousel"
+               data-bs-slide-to="<%= index %>">
+            <img src="<%= image.url %>" alt="thumb <%= index + 1 %>">
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <!-- Host info -->
+    <div class="host-info mt-3">
+      <div class="host-avatar">
+        <%= idListing.owner ? idListing.owner.username.charAt(0).toUpperCase() : 'U' %>
+      </div>
+      <div>
+        <h5 class="mb-0 fw-semibold">
+          Hosted by <%= idListing.owner ? idListing.owner.username : 'Unknown User' %>
+        </h5>
+        <span class="text-muted small">Joined recently</span>
+      </div>
+      <a href="/messages?receiverId=<%= idListing.owner ? idListing.owner._id : '' %>"
+         class="btn btn-primary-custom ms-auto" style="padding:0.5rem 1rem;">
+        Message Host
+      </a>
+      <% if(idListing.specifications && idListing.specifications.portfolioLink) { %>
+        <a href="<%= idListing.specifications.portfolioLink %>" target="_blank"
+           rel="noopener noreferrer" class="btn btn-outline-secondary ms-2"
+           style="padding:0.5rem 1rem;">
+          <i class="fa-solid fa-link"></i> Portfolio
+        </a>
+      <% } %>
+    </div>
+
+    <!-- Description + Price + Condition + Specs -->
+    <div class="row mb-4 mt-2">
+      <div class="col-12">
+
+        <div class="listing-detail-card">
+
+          <!-- Description -->
+          <h5 class="fw-semibold mb-3">About this listing</h5>
+          <p class="description"><%= idListing.description %></p>
+
+          <!-- Price -->
+          <div class="price-display mb-3">
+            <span class="price-symbol">&#8360;</span>
+            <span class="price-amount"><%= idListing.price.toLocaleString('en-PK') %></span>
+            <% if(idListing.listingType === 'Rent' && idListing.rentalPeriod && idListing.rentalPeriod !== 'N/A') { %>
+              <span class="price-period">
+                <% if(idListing.rentalPeriod === 'flat') { %>(Flat / Quoted Price)<% } else { %>/ <%= idListing.rentalPeriod %><% } %>
+              </span>
+            <% } %>
+          </div>
+
+          <!-- Condition -->
+          <% if(idListing.conditionGrade && idListing.mainCategory !== 'Service') { %>
+            <% var barWidth = idListing.conditionGrade * 10;
+               var gradeColor = '#dc3545';
+               if (idListing.conditionGrade >= 7) { gradeColor = '#28a745'; }
+               else if (idListing.conditionGrade >= 4) { gradeColor = '#ffc107'; } %>
+            <div class="mb-3">
+              <span class="fw-semibold">Condition:</span>
+              <span class="ms-1"><%= idListing.conditionGrade %>/10</span>
+              <div class="progress mt-1" style="height:8px;">
+                <div class="progress-bar" role="progressbar"
+                  data-bar-width="<%= barWidth %>"
+                  data-bar-color="<%= gradeColor %>">
+                </div>
+              </div>
+              <script>
+                (function(){
+                  var bar = document.currentScript.previousElementSibling.querySelector('.progress-bar');
+                  bar.style.width = bar.dataset.barWidth + '%';
+                  bar.style.backgroundColor = bar.dataset.barColor;
+                })();
+              </script>
+            </div>
+          <% } %>
+
+          <!-- Specifications -->
+          <% if(idListing.specifications) {
+               const specs = idListing.specifications;
+               const hasSpecs = specs.make || specs.model || specs.year || specs.area ||
+                                specs.bedrooms != null || specs.bathrooms != null ||
+                                specs.brand || specs.experience; %>
+            <% if(hasSpecs) { %>
+              <h6 class="fw-semibold mb-2">Specifications</h6>
+              <div class="specs-grid mb-3">
+                <% if(specs.make) { %><div class="spec-item"><span class="spec-label">Make</span><span class="spec-value"><%= specs.make %></span></div><% } %>
+                <% if(specs.model) { %><div class="spec-item"><span class="spec-label">Model</span><span class="spec-value"><%= specs.model %></span></div><% } %>
+                <% if(specs.year) { %><div class="spec-item"><span class="spec-label">Year</span><span class="spec-value"><%= specs.year %></span></div><% } %>
+                <% if(specs.area) { %><div class="spec-item"><span class="spec-label">Area</span><span class="spec-value"><%= specs.area %></span></div><% } %>
+                <% if(specs.bedrooms != null) { %><div class="spec-item"><span class="spec-label">Bedrooms</span><span class="spec-value"><%= specs.bedrooms %></span></div><% } %>
+                <% if(specs.bathrooms != null) { %><div class="spec-item"><span class="spec-label">Bathrooms</span><span class="spec-value"><%= specs.bathrooms %></span></div><% } %>
+                <% if(specs.brand) { %><div class="spec-item"><span class="spec-label">Brand</span><span class="spec-value"><%= specs.brand %></span></div><% } %>
+                <% if(specs.experience) { %><div class="spec-item"><span class="spec-label">Experience</span><span class="spec-value"><%= specs.experience %></span></div><% } %>
+                <% if(specs.serviceLocation) { %><div class="spec-item spec-item-full"><span class="spec-label"><i class="fa-solid fa-location-dot me-1" style="color:var(--primary)"></i>Service Area</span><span class="spec-value"><%= specs.serviceLocation %></span></div><% } %>
+              </div>
+            <% } %>
+          <% } %>
+
+          <!-- Address -->
+          <% if(idListing.address) { %>
+            <div class="d-flex align-items-start gap-2 text-muted small">
+              <i class="fa-solid fa-map-pin mt-1" style="color:var(--primary)"></i>
+              <span><%= idListing.address %>, <%= idListing.city %>, <%= idListing.country %></span>
+            </div>
+          <% } %>
+
+        </div><!-- /listing-detail-card -->
+      </div>
+    </div>
+
+  </div><!-- /col image+content -->
+
+
+  <!-- ── OWNER ACTIONS ── -->
+  <% if(currUser && (currUser._id.equals(idListing.owner._id) || currUser.role === 'admin')) { %>
+    <div class="col-10 col-lg-8 col-md-10 offset-1 offset-lg-2 offset-md-1">
+      <div class="d-flex gap-3 flex-wrap">
+        <a href="/explore/<%= idListing._id %>/edit" class="btn btn-primary-custom">Edit Listing</a>
+        <form method="post" action="/explore/<%= idListing._id %>?_method=DELETE">
+          <button class="btn btn-outline-danger"
+            style="border-radius:var(--radius-sm);padding:0.75rem 1.5rem;font-weight:600;">Delete</button>
+        </form>
+      </div>
+      <br>
+      <hr class="my-5">
+    </div>
+  <% } %>
+
+
+  <!-- ── AI REVIEW SUMMARY ── -->
+  <% if (idListing.reviewSummary) { %>
+    <div class="col-10 col-lg-8 col-md-10 offset-1 offset-lg-2 offset-md-1 mb-4">
+      <div class="ai-summary-card">
+        <div class="ai-summary-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        <div>
+          <h6 class="fw-semibold mb-1">AI Review Summary</h6>
+          <p class="mb-0 text-muted small"><%= idListing.reviewSummary %></p>
+          <p class="mt-2 mb-0" style="font-size:0.75rem;color:var(--text-light);">
+            Auto-generated based on user feedback.
+          </p>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+
+  <!-- ── MAP ── -->
+  <div class="col-10 col-lg-8 col-md-10 offset-lg-2 offset-md-1 mb-5">
+    <h4 class="fw-semibold mb-2">Where you'll be</h4>
+    <p class="text-muted">
+      <% if(idListing.address) { %><%= idListing.address %>, <% } %><%= idListing.city %>, <%= idListing.country %>
+    </p>
+    <div class="map-container">
+      <div id="map"></div>
+    </div>
+  </div>
+
+
+  <!-- ── REVIEWS ── -->
+  <div class="col-10 col-lg-8 col-md-10 offset-lg-2 offset-md-1">
+    <h4 class="fw-semibold mb-4">Reviews</h4>
+
+    <% if (idListing.reviews && idListing.reviews.length > 0) { %>
+      <div class="row">
+        <% for(let review of idListing.reviews) { %>
+          <div class="col-md-6 mb-3">
+            <div class="card p-2">
+              <div class="card-body">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <div class="review-avatar">
+                    <%= review.author ? review.author.username.charAt(0).toUpperCase() : 'A' %>
+                  </div>
+                  <h5 class="card-title mb-0">
+                    <%= review.author ? review.author.username : 'Anonymous User' %>
+                  </h5>
+                </div>
+                <p class="card-text starability-result" data-rating="<%= review.rating %>"></p>
+                <p class="card-text"><%= review.comment %></p>
+                <form method="POST"
+                      action="/explore/<%= idListing._id %>/reviews/<%= review._id %>?_method=DELETE">
+                  <% if(currUser && (currUser._id.equals(idListing.owner._id) ||
+                        (review.author && currUser._id.equals(review.author._id)) ||
+                        currUser.role === 'admin')) { %>
+                    <button class="btn btn-sm btn-dark">Delete</button>
+                  <% } %>
+                </form>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    <% } else { %>
+      <p class="text-muted">No reviews yet. Be the first to leave one!</p>
+    <% } %>
+  </div>
+
+
+  <!-- ── LEAVE A REVIEW ── -->
+  <% if(currUser) { %>
+    <div class="col-10 col-lg-8 col-md-10 offset-1 offset-lg-2 offset-md-1">
+      <hr class="my-5">
+      <h3>Leave a Review</h3>
+      <form method="POST" action="/explore/<%= idListing._id %>/reviews"
+            novalidate class="needs-validation">
+        <div class="mb-3 mt-3">
+          <fieldset class="starability-growRotate">
+            <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="1" checked aria-label="No rating." />
+            <input type="radio" id="first-rate1" name="review[rating]" value="1" />
+            <label for="first-rate1" title="Terrible">1 star</label>
+            <input type="radio" id="first-rate2" name="review[rating]" value="2" />
+            <label for="first-rate2" title="Not good">2 stars</label>
+            <input type="radio" id="first-rate3" name="review[rating]" value="3" />
+            <label for="first-rate3" title="Average">3 stars</label>
+            <input type="radio" id="first-rate4" name="review[rating]" value="4" />
+            <label for="first-rate4" title="Very good">4 stars</label>
+            <input type="radio" id="first-rate5" name="review[rating]" value="5" />
+            <label for="first-rate5" title="Amazing">5 stars</label>
+          </fieldset>
+        </div>
+        <div class="mb-3 mt-3">
+          <label for="comment" class="form-label">Comment</label>
+          <textarea name="review[comment]" id="comment" cols="30" rows="5"
+                    class="form-control" required></textarea>
+          <div class="invalid-feedback">Please add some comment for review!</div>
+        </div>
+        <button class="btn btn-outline-dark">Submit</button>
+      </form>
+      <br>
+    </div>
+  <% } %>
+
+</div><!-- /row -->
+
+<br />
+<script src="/js/map.js"></script>
+
+<!-- Thumbnail sync -->
+<script>
+  (function () {
+    var carousel = document.getElementById('listingCarousel');
+    if (!carousel) return;
+    var thumbs = document.querySelectorAll('.gallery-thumb');
+    var counter = document.getElementById('galleryCounter');
+    var total = thumbs.length;
+
+    thumbs.forEach(function (thumb) {
+      thumb.addEventListener('click', function () {
+        bootstrap.Carousel.getOrCreateInstance(carousel).to(parseInt(thumb.dataset.bsSlideTo));
+      });
+    });
+
+    carousel.addEventListener('slid.bs.carousel', function (e) {
+      thumbs.forEach(function (t) { t.classList.remove('active'); });
+      if (thumbs[e.to]) thumbs[e.to].classList.add('active');
+      if (counter) counter.textContent = (e.to + 1) + ' / ' + total;
+      if (thumbs[e.to]) thumbs[e.to].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    });
+  })();
+</script>

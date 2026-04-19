@@ -1,0 +1,240 @@
+<% layout("/layouts/boilerplate") %>
+    <link rel="stylesheet" href="/css/home.css">
+
+    <% function getIcon(sub) { const s=sub.toLowerCase(); if (s.includes('mobile') || s.includes('phone') ||
+        s.includes('tech')) return 'fa-mobile-screen' ; if (s.includes('electronic')) return 'fa-tv' ; if
+        (s.includes('appliance')) return 'fa-blender' ; if (s.includes('furniture')) return 'fa-couch' ; if
+        (s.includes('clothes') || s.includes('fashion')) return 'fa-shirt' ; if (s.includes('sport'))
+        return 'fa-basketball' ; if (s.includes('part') || s.includes('spare')) return 'fa-gears' ; if
+        (s.includes('car')) return 'fa-car' ; if (s.includes('motor')) return 'fa-motorcycle' ; if (s.includes('bicyc'))
+        return 'fa-bicycle' ; if (s.includes('boat')) return 'fa-ship' ; if (s.includes('hous') || s.includes('apart'))
+        return 'fa-house' ; if (s.includes('room')) return 'fa-door-open' ; if (s.includes('land') ||
+        s.includes('plot')) return 'fa-map' ; if (s.includes('vacation')) return 'fa-umbrella-beach' ; if
+        (s.includes('health') || s.includes('medic')) return 'fa-stethoscope' ; if (s.includes('it &') ||
+        s.includes('program')) return 'fa-laptop-code' ; if (s.includes('creative') || s.includes('design'))
+        return 'fa-pen-nib' ; if (s.includes('tutor') || s.includes('educat')) return 'fa-chalkboard-user' ; if
+        (s.includes('clean') || s.includes('maintain') || s.includes('home servic')) return 'fa-broom' ; if
+        (s.includes('event') || s.includes('photo')) return 'fa-camera' ; if (s.includes('transport') ||
+        s.includes('move')) return 'fa-truck-fast' ; if (s.includes('anim') || s.includes('pet')) return 'fa-paw' ; if
+        (s.includes('job') || s.includes('work')) return 'fa-briefcase' ; return 'fa-box' ; } %>
+
+        <% /* ── Reusable card partial macro ── */ %>
+            <% function listingCard(listing) { %>
+                <div class="horizontal-list-item listing-item">
+                    <a href="/explore/<%= listing._id %>" class="listing-link">
+                        <div class="listing-card">
+                            <div class="listing-img-container position-relative">
+                                <img src="<%= listing.image && listing.image.length > 0 ? listing.image[0].url : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800' %>"
+                                    class="card-img-top" alt="<%= listing.title %>">
+                                <% if (listing.listingType) { %>
+                                    <span
+                                        class="position-absolute top-0 end-0 m-2 badge bg-<%= listing.listingType === 'Rent' ? 'warning text-dark' : 'success' %>"
+                                        style="font-size:0.65rem;">
+                                        <%= listing.listingType %>
+                                    </span>
+                                    <% } %>
+                            </div>
+                            <div class="mt-2">
+                                <% if (listing.subCategory) { %>
+                                    <span class="badge rounded-pill mb-1"
+                                        style="background:rgba(255,56,92,0.1); color:var(--primary); font-size:0.6rem; font-weight:600;">
+                                        <%= listing.subCategory %>
+                                    </span>
+                                    <% } %>
+                                        <span class="listing-title">
+                                            <%= listing.title %>
+                                        </span>
+                                        <span class="listing-location">
+                                            <i class="fa-solid fa-location-dot me-1"></i>
+                                            <%= listing.city %>, <%= listing.country %>
+                                        </span>
+                                        <span class="listing-price">&#8360; <%= listing.price.toLocaleString('en-PK') %>
+                                                </span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <% } %>
+
+
+                    <!-- ══════════════════════════
+     ITEMS
+══════════════════════════ -->
+                    <div class="main-category-section mb-5">
+                        <div class="cat-filter-bar mb-4">
+                            <a href="/explore?mainCat=<%= encodeURIComponent('Item') %>" class="cat-main-pill">
+                                <i class="fa-solid fa-box-open"></i> Items
+                            </a>
+                            <div class="cat-divider"></div>
+                            <% for (let sub of CATEGORIES['Item']) { %>
+                                <a href="/explore?mainCat=<%= encodeURIComponent('Item') %>&subCat=<%= encodeURIComponent(sub) %>"
+                                    class="cat-sub-link">
+                                    <%= sub %>
+                                </a>
+                                <% } %>
+                        </div>
+                        <div class="scroll-btn-wrapper">
+                            <button class="scroll-btn left"><i class="fa-solid fa-chevron-left"></i></button>
+                            <div class="horizontal-scroll-container pb-2" id="scroll-Items">
+                                <% for (let listing of recentItems) { %>
+                                    <%= listingCard(listing) %>
+                                        <% } %>
+                                            <% if (!recentItems || recentItems.length===0) { %>
+                                                <div class="text-muted small p-3 border rounded w-100 text-center"
+                                                    style="background:#f8f9fa;">
+                                                    No Items listed recently.
+                                                </div>
+                                                <% } %>
+                            </div>
+                            <button class="scroll-btn right"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+
+
+                    <!-- ══════════════════════════
+     VEHICLES
+══════════════════════════ -->
+                    <div class="main-category-section mb-5">
+                        <div class="cat-filter-bar mb-4">
+                            <a href="/explore?mainCat=<%= encodeURIComponent('Vehicle') %>" class="cat-main-pill">
+                                <i class="fa-solid fa-car-side"></i> Vehicles
+                            </a>
+                            <div class="cat-divider"></div>
+                            <% for (let sub of CATEGORIES['Vehicle']) { %>
+                                <a href="/explore?mainCat=<%= encodeURIComponent('Vehicle') %>&subCat=<%= encodeURIComponent(sub) %>"
+                                    class="cat-sub-link">
+                                    <%= sub %>
+                                </a>
+                                <% } %>
+                        </div>
+                        <div class="scroll-btn-wrapper">
+                            <button class="scroll-btn left"><i class="fa-solid fa-chevron-left"></i></button>
+                            <div class="horizontal-scroll-container pb-2" id="scroll-Vehicles">
+                                <% for (let listing of recentVehicles) { %>
+                                    <%= listingCard(listing) %>
+                                        <% } %>
+                                            <% if (!recentVehicles || recentVehicles.length===0) { %>
+                                                <div class="text-muted small p-3 border rounded w-100 text-center"
+                                                    style="background:#f8f9fa;">
+                                                    No Vehicles listed recently.
+                                                </div>
+                                                <% } %>
+                            </div>
+                            <button class="scroll-btn right"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+
+
+                    <!-- ══════════════════════════
+     PROPERTIES
+══════════════════════════ -->
+                    <div class="main-category-section mb-5">
+                        <div class="cat-filter-bar mb-4">
+                            <a href="/explore?mainCat=<%= encodeURIComponent('Property') %>" class="cat-main-pill">
+                                <i class="fa-solid fa-building"></i> Properties
+                            </a>
+                            <div class="cat-divider"></div>
+                            <% for (let sub of CATEGORIES['Property']) { %>
+                                <a href="/explore?mainCat=<%= encodeURIComponent('Property') %>&subCat=<%= encodeURIComponent(sub) %>"
+                                    class="cat-sub-link">
+                                    <%= sub %>
+                                </a>
+                                <% } %>
+                        </div>
+                        <div class="scroll-btn-wrapper">
+                            <button class="scroll-btn left"><i class="fa-solid fa-chevron-left"></i></button>
+                            <div class="horizontal-scroll-container pb-2" id="scroll-Properties">
+                                <% for (let listing of recentProperties) { %>
+                                    <%= listingCard(listing) %>
+                                        <% } %>
+                                            <% if (!recentProperties || recentProperties.length===0) { %>
+                                                <div class="text-muted small p-3 border rounded w-100 text-center"
+                                                    style="background:#f8f9fa;">
+                                                    No Properties listed recently.
+                                                </div>
+                                                <% } %>
+                            </div>
+                            <button class="scroll-btn right"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+
+
+                    <!-- ══════════════════════════
+     SERVICES
+══════════════════════════ -->
+                    <div class="main-category-section mb-5">
+                        <div class="cat-filter-bar mb-4">
+                            <a href="/explore?mainCat=<%= encodeURIComponent('Service') %>" class="cat-main-pill">
+                                <i class="fa-solid fa-screwdriver-wrench"></i> Services
+                            </a>
+                            <div class="cat-divider"></div>
+                            <% for (let sub of CATEGORIES['Service']) { %>
+                                <a href="/explore?mainCat=<%= encodeURIComponent('Service') %>&subCat=<%= encodeURIComponent(sub) %>"
+                                    class="cat-sub-link">
+                                    <%= sub %>
+                                </a>
+                                <% } %>
+                        </div>
+                        <div class="scroll-btn-wrapper">
+                            <button class="scroll-btn left"><i class="fa-solid fa-chevron-left"></i></button>
+                            <div class="horizontal-scroll-container pb-2" id="scroll-Services">
+                                <% for (let listing of recentServices) { %>
+                                    <%= listingCard(listing) %>
+                                        <% } %>
+                                            <% if (!recentServices || recentServices.length===0) { %>
+                                                <div class="text-muted small p-3 border rounded w-100 text-center"
+                                                    style="background:#f8f9fa;">
+                                                    No Services listed recently.
+                                                </div>
+                                                <% } %>
+                            </div>
+                            <button class="scroll-btn right"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+
+
+                    <!-- ══════════════════════════
+     FEATURES SECTION
+══════════════════════════ -->
+                    <div class="home-info-section">
+                        <div class="info-card">
+                            <div class="info-icon"><i class="fa-solid fa-robot"></i></div>
+                            <h3 class="info-title">Your Personal AI Shopper</h3>
+                            <p class="info-text">Describe what you need in plain words — our AI agent learns your
+                                preferences, searches smarter, and surfaces listings you'll actually love.</p>
+                            <a href="/agent" class="btn btn-outline-dark info-btn">Try AI Agent</a>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="info-icon"><i class="fa-solid fa-comments"></i></div>
+                            <h3 class="info-title">Chat Directly with Hosts</h3>
+                            <p class="info-text">Skip the back-and-forth emails. Message any host instantly, ask
+                                questions, negotiate, and close the deal — all in one place.</p>
+                            <a href="/messages" class="btn btn-outline-dark info-btn">Open Messages</a>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="info-icon"><i class="fa-solid fa-store"></i></div>
+                            <h3 class="info-title">Turn Idle into Income</h3>
+                            <p class="info-text">Got a spare room, an extra car, or a skill people need? Complete your
+                                profile securely and list it in minutes and start earning from assets you already own.
+                            </p>
+                            <a href="/explore/new" class="btn btn-outline-dark info-btn">Start Listing</a>
+                        </div>
+                    </div>
+
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const wrappers = document.querySelectorAll('.scroll-btn-wrapper');
+                            wrappers.forEach(wrapper => {
+                                const container = wrapper.querySelector('.horizontal-scroll-container');
+                                const leftBtn = wrapper.querySelector('.scroll-btn.left');
+                                const rightBtn = wrapper.querySelector('.scroll-btn.right');
+                                if (container && leftBtn && rightBtn) {
+                                    leftBtn.addEventListener('click', () => container.scrollBy({ left: -(window.innerWidth > 768 ? 500 : 300), behavior: 'smooth' }));
+                                    rightBtn.addEventListener('click', () => container.scrollBy({ left: (window.innerWidth > 768 ? 500 : 300), behavior: 'smooth' }));
+                                }
+                            });
+                        });
+                    </script>

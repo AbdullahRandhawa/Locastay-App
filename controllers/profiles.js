@@ -134,7 +134,7 @@ module.exports.deleteAccount = async (req, res, next) => {
         res.clearCookie('__session');
         res.clearCookie('fbToken');
         req.flash('success', 'Your account and all associated data have been completely deleted.');
-        res.redirect('/listings');
+        res.redirect('/explore');
 
     } catch (err) {
         console.error("Account Deletion Error:", err);

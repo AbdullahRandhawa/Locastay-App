@@ -375,7 +375,7 @@
                 : price.toLocaleString();
 
             return `
-                <a href="/listings/${l._id}" class="sidebar-listing-card" target="_blank">
+                <a href="/explore/${l._id}" class="sidebar-listing-card" target="_blank">
                     <div class="listing-card-inner">
                         <img class="listing-card-img" src="${imgSrc}" alt="${l.title || ''}" loading="lazy"
                              onerror="this.src='https://images.pexels.com/photos/13305201/pexels-photo-13305201.jpeg'"/>

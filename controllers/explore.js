@@ -68,7 +68,7 @@ function buildSearchContext(listing) {
 // 1. INDEX ROUTE
 module.exports.index = async (req, res) => {
     const allListings = await Listing.find({});
-    res.render('listings/index.ejs', { allListings, CATEGORIES });
+    res.render('explore/index.ejs', { allListings, CATEGORIES });
 };
 
 // 2. SEARCH ROUTE (Updated to include new categories)
@@ -91,12 +91,12 @@ module.exports.searchListings = async (req, res, next) => {
         ]
     });
 
-    res.render('listings/search.ejs', { allListings, q });
+    res.render('explore/search.ejs', { allListings, q });
 };
 
 // 3. RENDER NEW FORM
 module.exports.renderNewForm = (req, res) => {
-    res.render('listings/new.ejs', { CATEGORIES });
+    res.render('explore/new.ejs', { CATEGORIES });
 };
 
 
@@ -164,7 +164,7 @@ module.exports.createListing = async (req, res) => {
 
     const newly = await newListing.save();
     req.flash("success", "New listing created successfully!");
-    res.redirect(`/listings/${newly._id}`);
+    res.redirect(`/explore/${newly._id}`);
 };
 
 
@@ -194,9 +194,9 @@ module.exports.showListing = async (req, res) => {
 
     if (!idListing) {
         req.flash("error", "Listing you requested for does not exist!");
-        return res.redirect('/listings');
+        return res.redirect('/explore');
     }
-    res.render('listings/show.ejs', { idListing });
+    res.render('explore/show.ejs', { idListing });
 };
 
 // 6. RENDER EDIT FORM (With your 150px Thumbnail logic)
@@ -206,7 +206,7 @@ module.exports.renderEditForm = async (req, res) => {
 
     if (!listing) {
         req.flash("error", "Listing not found!");
-        return res.redirect('/listings');
+        return res.redirect('/explore');
     }
 
     // Your original thumbnail replacement logic
@@ -217,7 +217,7 @@ module.exports.renderEditForm = async (req, res) => {
         duplicates.push(duplicate);
     });
 
-    res.render('listings/edit.ejs', { listing, duplicates, CATEGORIES });
+    res.render('explore/edit.ejs', { listing, duplicates, CATEGORIES });
 };
 
 // 7. EDIT LISTING
@@ -262,7 +262,7 @@ module.exports.editListing = async (req, res) => {
 
     await listing.save();
     req.flash("success", "Listing edited successfully!");
-    res.redirect(`/listings/${id}`);
+    res.redirect(`/explore/${id}`);
 };
 
 // 8. DELETE LISTING
@@ -270,5 +270,5 @@ module.exports.deleteListing = async (req, res) => {
     let { id } = req.params;
     await Listing.findByIdAndDelete(id);
     req.flash("success", "Listing deleted successfully!");
-    res.redirect('/listings');
+    res.redirect('/explore');
 };

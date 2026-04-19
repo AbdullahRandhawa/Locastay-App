@@ -5,7 +5,7 @@
     <div class="row">
       <div class="col-10 col-lg-8 col-md-10 offset-1 offset-lg-2 offset-md-1">
 
-        <form method="POST" action="/listings" class="needs-validation" novalidate enctype="multipart/form-data">
+        <form method="POST" action="/explore" class="needs-validation form-card-wrapper mt-4 mb-5" novalidate enctype="multipart/form-data">
 
           <!-- ==================== STEP 1: CATEGORY ==================== -->
           <div id="step1">
@@ -13,7 +13,7 @@
             <p class="text-muted text-center mb-5">Choose a category and listing type to get started</p>
 
             <!-- Main Category Cards -->
-            <label class="form-label fw-semibold mb-3 text-dark">Category</label>
+            <label class="form-label fw-semibold mb-3">Category</label>
             <div class="row g-3 mb-5 pb-2">
               <% const catIcons={ Item: 'fa-box-open' , Vehicle: 'fa-car' , Property: 'fa-house' , Service: 'fa-wrench'
                 }; %>
@@ -33,7 +33,7 @@
 
             <!-- Listing Type Cards -->
             <div id="listingTypeSectionWrapper">
-              <label class="form-label fw-semibold mb-3 text-dark">Listing Type</label>
+              <label class="form-label fw-semibold mb-3">Listing Type</label>
               <div class="row g-3 mb-5 pb-3">
                 <div class="col-6">
                   <input type="radio" name="listing[listingType]" id="type-Sale" value="Sale" class="d-none type-radio"

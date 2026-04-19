@@ -10,13 +10,13 @@
     <i class="fa-solid fa-magnifying-glass fs-1 text-muted mb-3 d-block"></i>
     <h4 class="fw-semibold">No listings found</h4>
     <p class="text-muted">Try a different search term.</p>
-    <a href="/listings" class="btn btn-outline-dark mt-2">Browse all listings</a>
+    <a href="/explore" class="btn btn-outline-dark mt-2">Browse all listings</a>
 </div>
 <% } else { %>
 <div class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-1 g-4">
     <% for(let listing of allListings){ %>
     <div class="col">
-        <a href="/listings/<%= listing._id %>" class="listing-link">
+        <a href="/explore/<%= listing._id %>" class="listing-link">
             <div class="listing-card">
                 <div class="listing-img-container position-relative">
                     <img src="<%= listing.image && listing.image.length > 0 ? listing.image[0].url : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800' %>" class="card-img-top" alt="<%= listing.title %>">

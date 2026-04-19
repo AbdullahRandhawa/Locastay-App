@@ -1,0 +1,271 @@
+/* ================================================
+   home.css — Rentlyst Home Page Styles
+   ================================================ */
+
+/* ── Main Category Section ─────────────────────── */
+.main-category-section {
+    background-color: #e9ecef;
+    border: 1px solid #dee2e6;
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+@media (max-width: 768px) {
+    .main-category-section {
+        padding: 1.5rem;
+    }
+}
+
+/* ── Category Filter Bar ────────────────────────── */
+.cat-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    flex-wrap: nowrap;
+    background: white;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 50px;
+    padding: 0.3rem 0.6rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+.cat-filter-bar::-webkit-scrollbar { display: none; }
+
+.cat-filter-bar .cat-main-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+    text-decoration: none;
+    transition: background 0.15s;
+}
+.cat-filter-bar .cat-main-pill:hover {
+    background: var(--primary-hover);
+    color: white;
+}
+
+/* Vertical divider */
+.cat-filter-bar .cat-divider {
+    width: 1.5px;
+    height: 22px;
+    background: #e0e0e0;
+    flex-shrink: 0;
+    margin: 0 0.5rem;
+}
+
+.cat-filter-bar .cat-sub-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    border: 1.5px solid transparent;
+}
+.cat-filter-bar .cat-sub-link:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(255, 56, 92, 0.04);
+}
+
+/* ── Horizontal Scroll Container ────────────────── */
+.horizontal-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+}
+.horizontal-scroll-container::-webkit-scrollbar { display: none; }
+
+/* ── Listing Cards ──────────────────────────────── */
+.horizontal-list-item {
+    flex: 0 0 215px;
+    max-width: 215px;
+    min-width: 0;
+}
+.horizontal-list-item .listing-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.5rem !important;
+    padding-bottom: 0.4rem !important;
+}
+.horizontal-list-item .listing-img-container {
+    aspect-ratio: 1 / 1;
+    margin-bottom: 0.5rem;
+}
+.horizontal-list-item .card-img-top {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.horizontal-list-item .listing-card .mt-2 {
+    overflow: hidden;
+    min-width: 0;
+    padding: 0 0.25rem;
+}
+.horizontal-list-item .listing-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    color: var(--text-dark);
+    margin-bottom: 0.15rem;
+}
+.horizontal-list-item .listing-location {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    color: var(--text-muted);
+    margin-bottom: 0.15rem;
+}
+.horizontal-list-item .listing-price {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+/* ── Scroll Buttons ─────────────────────────────── */
+.scroll-btn-wrapper {
+    position: relative;
+    margin-top: 1.5rem;
+}
+.scroll-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-80%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid var(--bg-tertiary);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s;
+}
+.scroll-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+.scroll-btn.left  { left:  -20px; }
+.scroll-btn.right { right: -20px; }
+@media (max-width: 991px) {
+    .scroll-btn { display: none; }
+}
+
+/* ── Features Section ───────────────────────────── */
+.home-info-section {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 24px;
+    padding: 3rem 2rem;
+    margin-top: 4rem;
+    margin-bottom: 4rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+}
+.info-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+.info-icon {
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+.info-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-dark);
+}
+.info-text {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+.info-btn {
+    border-radius: 20px;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* ── Dark Mode overrides ─────────────────────────── */
+[data-theme="dark"] .main-category-section {
+    background-color: #1a1a1a;
+    border-color: #2c2c2c;
+}
+[data-theme="dark"] .cat-filter-bar {
+    background: #1f1f1f;
+    border-color: #2c2c2c;
+}
+[data-theme="dark"] .cat-filter-bar .cat-sub-link {
+    color: #c5c5c5;
+}
+[data-theme="dark"] .cat-filter-bar .cat-sub-link:hover {
+    background: rgba(255,56,92,0.08);
+    color: var(--primary);
+}
+[data-theme="dark"] .cat-filter-bar .cat-divider {
+    background: #2c2c2c;
+}
+[data-theme="dark"] .scroll-btn {
+    background: #1f1f1f;
+    border-color: #2c2c2c;
+    color: #c5c5c5;
+}
+[data-theme="dark"] .home-info-section {
+    background: #1a1a1a;
+    border-color: #2c2c2c;
+}
+[data-theme="dark"] .info-card {
+    background: #1f1f1f;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+[data-theme="dark"] .info-card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.45);
+}
+[data-theme="dark"] .info-title { color: #ededed; }
+[data-theme="dark"] .info-text  { color: #a0a0a0; }
+

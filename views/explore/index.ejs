@@ -35,7 +35,7 @@
             <% for(let listing of allListings){ %>
                 <div class="col listing-item" data-category="<%= listing.mainCategory %>"
                     data-subcategory="<%= listing.subCategory %>">
-                    <a href="/listings/<%= listing._id %>" class="listing-link">
+                    <a href="/explore/<%= listing._id %>" class="listing-link">
                         <div class="listing-card">
                             <div class="listing-img-container position-relative">
                                 <img src="<%= listing.image && listing.image.length > 0 ? listing.image[0].url : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800' %>"
@@ -139,6 +139,25 @@
             new IntersectionObserver(entries => {
                 if (entries[0].isIntersecting && offset < pool.length) showBatch();
             }, { rootMargin: '200px' }).observe(document.getElementById('sentinel'));
+
+            // Parse URL parameters dynamically and apply filters if present
+            (function() {
+                const params = new URLSearchParams(window.location.search);
+                const qMain = params.get('mainCat');
+                const qSub = params.get('subCat');
+                
+                if (qMain) {
+                    activeCat = qMain;
+                    activeSub = qSub || '';
+                    
+                    // Update dropdown UI if matching catMeta exists
+                    const catMap = { 'Item': 'fa-box-open', 'Vehicle': 'fa-car', 'Property': 'fa-house', 'Service': 'fa-wrench' };
+                    if (catMap[qMain]) {
+                        document.getElementById('catIcon').className = 'fa-solid ' + catMap[qMain];
+                        document.getElementById('catLabel').textContent = qMain + 's';
+                    }
+                }
+            })();
 
             render();
         </script>

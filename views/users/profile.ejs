@@ -8,18 +8,23 @@
                     <div class="card border-0 shadow-sm p-4 text-center h-100"
                         style="border-radius: var(--radius-lg); background-color: var(--bg-main);">
                         <div class="mb-3">
-                            <img class="profile-img-large shadow-sm" src="<%= profile.profileImg.url %>"
+                            <img class="profile-img-large shadow-sm" src="<%= profile.profileImg && profile.profileImg.url ? profile.profileImg.url : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=200' %>"
                                 alt="Profile Image" />
                         </div>
                         <h3 class="fw-bold mb-1">
-                            <%= profile.fullName %>
+                            <%= profile.fullName || profile.username %>
                         </h3>
                         <p class="text-muted mb-4">@<%= profile.username %>
                         </p>
 
                         <div class="d-grid gap-2">
-                            <a href="/profile/edit" class="btn btn-outline-dark"
-                                style="border-radius: var(--radius-sm);">Edit Profile</a>
+                            <% if(currUser && (currUser._id.equals(profile.user._id) || currUser.role === 'admin')) { %>
+                                <a href="/profile/edit?id=<%= profile.user._id %>" class="btn btn-outline-dark" style="border-radius: var(--radius-sm);">Edit Profile</a>
+                            <% } %>
+                            
+                            <% if(!currUser || !currUser._id.equals(profile.user._id)) { %>
+                                <a href="/messages?receiverId=<%= profile.user %>" class="btn btn-primary-custom" style="border-radius: var(--radius-sm);">Message Host</a>
+                            <% } %>
                         </div>
                     </div>
                 </div>
@@ -29,8 +34,9 @@
                         style="border-radius: var(--radius-lg); background-color: var(--bg-main);">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="fw-bold mb-0">About</h4>
-                            <a href="/explore/new" class="btn btn-primary-custom"><i class="fa-solid fa-plus me-2"></i>
-                                Add Listing</a>
+                            <% if(currUser && currUser._id.equals(profile.user._id)) { %>
+                                <a href="/explore/new" class="btn btn-primary-custom"><i class="fa-solid fa-plus me-2"></i>Add Listing</a>
+                            <% } %>
                         </div>
 
                         <p class="fs-5 mb-4" style="color: var(--text-dark); line-height: 1.6;">
@@ -68,7 +74,13 @@
 
             <!-- User's Listings -->
             <div class="mb-4 text-center text-md-start">
-                <h3 class="fw-bold">Your Listings</h3>
+                <h3 class="fw-bold">
+                    <% if(currUser && currUser._id.equals(profile.user._id)) { %>
+                        Your Listings
+                    <% } else { %>
+                        Listings by <%= profile.username %>
+                    <% } %>
+                </h3>
             </div>
 
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
@@ -100,14 +112,15 @@
                         <% } %>
                             <% } else { %>
                                 <div class="col-12 w-100 text-center py-5">
-                                    <div class="p-5 border rounded"
-                                        style="background-color: var(--bg-secondary); border-color: var(--bg-tertiary) !important; border-radius: var(--radius-lg) !important;">
+                                    <div class="p-5 border rounded" style="background-color: var(--bg-secondary); border-color: var(--bg-tertiary) !important; border-radius: var(--radius-lg) !important;">
                                         <i class="fa-solid fa-house-chimney fs-1 text-muted mb-3"></i>
                                         <h4 class="fw-bold">No listings yet</h4>
-                                        <p class="text-muted mb-4">You haven't created any listings. Start hosting
-                                            today!</p>
-                                        <a href="/explore/new" class="btn btn-primary-custom">Create your first
-                                            listing</a>
+                                        <% if(currUser && currUser._id.equals(profile.user._id)) { %>
+                                            <p class="text-muted mb-4">You haven't created any listings. Start hosting today!</p>
+                                            <a href="/explore/new" class="btn btn-primary-custom">Create your first listing</a>
+                                        <% } else { %>
+                                            <p class="text-muted mb-4">This host hasn't created any active listings.</p>
+                                        <% } %>
                                     </div>
                                 </div>
                                 <% } %>

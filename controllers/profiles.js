@@ -13,18 +13,52 @@ module.exports.profile = async (req, res, next) => {
     res.render('users/profile.ejs', { allListings, profile });
 }
 
+module.exports.publicProfile = async (req, res, next) => {
+    const targetUserId = req.params.id;
+    const profile = await Profile.findOne({ user: targetUserId });
+    
+    if (!profile) {
+        req.flash('error', 'Profile not found.');
+        return res.redirect('/explore');
+    }
+
+    const allListings = await Listing.find({ owner: targetUserId });
+    res.render('users/profile.ejs', { allListings, profile });
+}
+
 module.exports.renderProfileEditForm = async (req, res, next) => {
-    const userId = req.user._id;
-    const profile = await Profile.findOne({ user: userId });
+    const targetUserId = (req.user.role === 'admin' && req.query.id) ? req.query.id : req.user._id;
+    const profile = await Profile.findOne({ user: targetUserId });
     res.render('users/editProfile.ejs', { profile });
 }
 
 module.exports.editProfile = async (req, res, next) => {
-    const userId = req.user._id;
+    // If admin is saving edits for someone else, they'll pass targetUserId in body
+    const targetUserId = (req.user.role === 'admin' && req.body.targetUserId) ? req.body.targetUserId : req.user._id;
 
     try {
+        if (req.body.profile.username) {
+            let newUsername = req.body.profile.username.toLowerCase();
+            const usernameRegex = /^[a-z0-9_]+$/;
+            if (!usernameRegex.test(newUsername)) {
+                req.flash('error', 'Username must contain only lowercase letters, numbers, and underscores.');
+                return res.redirect('back');
+            }
+            
+            // Check uniqueness (exclude the actual user being edited)
+            const existingUser = await User.findOne({ username: newUsername, _id: { $ne: targetUserId } });
+            if (existingUser) {
+                req.flash('error', 'Username is already taken by another user.');
+                return res.redirect('back');
+            }
+            
+            // Reassign the clean string back into the payload, and update User Model
+            req.body.profile.username = newUsername;
+            await User.findByIdAndUpdate(targetUserId, { username: newUsername });
+        }
+
         let updatedProfile = await Profile.findOneAndUpdate(
-            { user: userId },
+            { user: targetUserId },
             { ...req.body.profile },
             { new: true }
         );
@@ -41,13 +75,14 @@ module.exports.editProfile = async (req, res, next) => {
         }
 
         // Firebase Sync logic
-        const firebaseUid = req.user.firebaseUid;
+        const targetUser = await User.findById(targetUserId);
+        const firebaseUid = targetUser ? targetUser.firebaseUid : null;
         
         if (firebaseUid) {
             const userRef = db.collection("users").doc(firebaseUid);
             await userRef.set({
                 avatar: (updatedProfile.profileImg && updatedProfile.profileImg.url) ? updatedProfile.profileImg.url : "",
-                username: updatedProfile.username || req.user.username,
+                username: updatedProfile.username || targetUser.username,
                 fullName: updatedProfile.fullName || "",
                 bio: updatedProfile.bio || ""
             }, { merge: true });
@@ -55,8 +90,12 @@ module.exports.editProfile = async (req, res, next) => {
             console.log("Firebase Profile Synced successfully!");
         }
 
-        console.log("Firebase Profile Synced successfully!");
-        res.redirect('/profile');
+        req.flash('success', 'Profile updated successfully!');
+        if(req.user.role === 'admin' && req.body.targetUserId) {
+            res.redirect(`/profile/public/${targetUserId}`);
+        } else {
+            res.redirect('/profile');
+        }
 
     } catch (err) {
         console.error("Profile Update/Sync Error:", err.message);

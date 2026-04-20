@@ -80,28 +80,29 @@
     <% } %>
 
     <!-- Host info -->
-    <div class="host-info mt-3">
-      <div class="host-avatar">
-        <%= idListing.owner ? idListing.owner.username.charAt(0).toUpperCase() : 'U' %>
+    <a href="/profile/public/<%= idListing.owner ? idListing.owner._id : '' %>" class="text-decoration-none" style="display: block; color: inherit;">
+      <div class="host-info mt-3" style="transition: box-shadow 0.2s; cursor: pointer;" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow='var(--shadow-sm)'">
+        <div class="host-avatar">
+          <%= idListing.owner ? idListing.owner.username.charAt(0).toUpperCase() : 'U' %>
+        </div>
+        <div>
+          <h5 class="mb-0 fw-semibold">
+            Hosted by <%= idListing.owner ? idListing.owner.username : 'Unknown User' %>
+          </h5>
+          <span class="text-muted small">Joined recently</span>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <% if(idListing.specifications && idListing.specifications.portfolioLink) { %>
+            <div class="btn btn-outline-secondary" style="padding:0.5rem 1rem; pointer-events: none;">
+              <i class="fa-solid fa-link"></i> Portfolio
+            </div>
+          <% } %>
+          <object><a href="/messages?receiverId=<%= idListing.owner ? idListing.owner._id : '' %>" class="btn btn-primary-custom" style="padding:0.5rem 1rem;">
+            Message Host
+          </a></object>
+        </div>
       </div>
-      <div>
-        <h5 class="mb-0 fw-semibold">
-          Hosted by <%= idListing.owner ? idListing.owner.username : 'Unknown User' %>
-        </h5>
-        <span class="text-muted small">Joined recently</span>
-      </div>
-      <a href="/messages?receiverId=<%= idListing.owner ? idListing.owner._id : '' %>"
-         class="btn btn-primary-custom ms-auto" style="padding:0.5rem 1rem;">
-        Message Host
-      </a>
-      <% if(idListing.specifications && idListing.specifications.portfolioLink) { %>
-        <a href="<%= idListing.specifications.portfolioLink %>" target="_blank"
-           rel="noopener noreferrer" class="btn btn-outline-secondary ms-2"
-           style="padding:0.5rem 1rem;">
-          <i class="fa-solid fa-link"></i> Portfolio
-        </a>
-      <% } %>
-    </div>
+    </a>
 
     <!-- Description + Price + Condition + Specs -->
     <div class="row mb-4 mt-2">

@@ -26,7 +26,8 @@ const Profile = require('./models/profile');
 const exploreRoute = require('./routes/explore.js');
 const reviewRoute = require('./routes/review.js');
 const userRoute = require('./routes/user.js');
-const profileRoute = require('./routes/profile.js');
+const profileRouter = require("./routes/profile.js");
+const adminRouter = require('./routes/admin.js');
 const agentRoute = require('./routes/agent.js');
 
 const homeRoute = require('./routes/home.js');
@@ -143,7 +144,8 @@ app.use('/explore', exploreRoute);
 app.use('/explore/:id/reviews', reviewRoute);
 app.use('/', userRoute);
 app.use('/agent', agentRoute);
-app.use('/profile', profileRoute);
+app.use('/profile', profileRouter);
+app.use('/admin', adminRouter);
 
 app.get('/messages', isLoggedIn, async (req, res) => {
     try {

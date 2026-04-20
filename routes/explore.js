@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const asyncWrap = require('../utils/asyncWrap');
-const { isLoggedIn, isOwner, validateListing } = require('../utils/middleware.js');
+const { isLoggedIn, isOwner, validateListing, canCreateListing } = require('../utils/middleware.js');
 const exploreController = require('../controllers/explore.js')
 const multer = require('multer');
 const { storage } = require('../cloudConfig.js');
@@ -11,12 +11,12 @@ const upload = multer({ storage });
 // Index route && Create Listing Route
 router.route('/')
     .get(asyncWrap(exploreController.index))
-    .post(isLoggedIn, upload.array('listing[image]'), validateListing, asyncWrap(exploreController.createListing));
+    .post(isLoggedIn, canCreateListing, upload.array('listing[image]'), validateListing, asyncWrap(exploreController.createListing));
 
 
 
 // Render New Form Route
-router.get('/new', isLoggedIn, exploreController.renderNewForm);
+router.get('/new', isLoggedIn, canCreateListing, exploreController.renderNewForm);
 
 router.get('/search', asyncWrap(exploreController.searchListings));
 

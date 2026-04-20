@@ -28,8 +28,8 @@ module.exports.createSignup = async (req, res, next) => {
             return res.status(400).json({ error: 'Username or Email is already taken. Please try another.' });
         }
 
-        // 3. Determine role — useradmin1, useradmin2, and username3 are the Admins
-        const adminUsernames = ['useradmin1', 'useradmin2', 'username3'];
+        // 3. Determine role — useradmin1, useradmin2, and useradmin3 are the Admins
+        const adminUsernames = ['useradmin1', 'useradmin2', 'useradmin3'];
         const role = adminUsernames.includes(username) ? 'admin' : 'user';
 
         // 4. Create the Mongo User record (lightweight, no passwords)
@@ -110,6 +110,10 @@ module.exports.login = async (req, res) => {
         const user = await User.findOne({ firebaseUid });
         if (!user) {
             return res.status(404).json({ error: 'No Rentlyst account found. Please sign up first.' });
+        }
+
+        if (user.isDisabled) {
+            return res.status(403).json({ error: 'Your account has been disabled. Please contact an admin.' });
         }
 
         // 3. Create a secure Session Cookie (14 days - Firebase max allowed limit)

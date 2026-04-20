@@ -4,11 +4,26 @@
         <div class="row">
             <div class="col-10 col-lg-8 col-md-10 offset-1 offset-lg-2 offset-md-1 ">
                 <br>
-                <h3>Edit Your Profile</h3>
+                <h3><% if(currUser && currUser.role === 'admin' && profile.user.toString() !== currUser._id.toString()) { %>Edit <%= profile.username %>'s Profile <% } else { %>Edit Your Profile<% } %></h3>
                 <br>
                 <form method="POST" action="/profile?_method=PUT" class="needs-validation" novalidate
                     enctype="multipart/form-data">
 
+                    <% if(currUser && currUser.role === 'admin' && profile.user.toString() !== currUser._id.toString()) { %>
+                        <input type="hidden" name="targetUserId" value="<%= profile.user._id %>">
+                        <div class="alert alert-warning text-center small p-2">
+                            <i class="fa-solid fa-shield-halved me-1"></i> You are modifying <b><%= profile.username %>'s</b> profile as an Admin.
+                        </div>
+                    <% } %>
+
+
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" name="profile[username]" value="<%= profile.username %>"
+                            class="form-control" pattern="^[a-z0-9_]+$" required>
+                        <div class="form-text" style="font-size: 0.8rem;">Only lowercase letters, numbers, and underscores.</div>
+                    </div>
+                    <br>
 
                     <div class="mb-3">
                         <label for="fullName" class="form-label">Full Name</label>
@@ -60,6 +75,7 @@
                     <br><br><br>
                 </form>
 
+                <% if(!currUser || profile.user.toString() === currUser._id.toString()) { %>
                 <hr class="my-5">
 
                 <div class="card border-danger mb-5 p-4">
@@ -75,6 +91,9 @@
                         </form>
                     </div>
                 </div>
+                <% } else { %>
+                    <br><br>
+                <% } %>
             </div>
         </div>
     </body>

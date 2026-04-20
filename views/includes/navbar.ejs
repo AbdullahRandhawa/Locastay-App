@@ -51,30 +51,43 @@
                 <div class="dropdown ms-1 d-none d-md-block">
                   <div class="user-menu" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fa-solid fa-bars"></i>
-                    <div class="host-avatar"
-                      style="width:32px;height:32px;font-size:0.9rem;overflow:hidden;border-radius:50%;">
-                      <% if(locals.currProfile && currProfile.profileImg && currProfile.profileImg.url &&
-                        !currProfile.profileImg.url.includes('pexels.com')) { %>
-                        <img src="<%= currProfile.profileImg.url %>" alt="Profile"
-                          style="width:100%;height:100%;object-fit:cover;">
-                        <% } else { %>
+                    <% if(currProfile && currProfile.profileImg && currProfile.profileImg.url) { %>
+                      <img src="<%= currProfile.profileImg.url %>" alt="Profile"
+                        style="width:32px;height:32px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0;">
+                      <% } else { %>
+                        <div
+                          style="width:32px;height:32px;border-radius:50%;background-color:#222;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">
                           <%= currUser.username ? currUser.username.charAt(0).toUpperCase() : 'U' %>
-                            <% } %>
-                    </div>
+                        </div>
+                        <% } %>
                   </div>
                   <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2"
                     aria-labelledby="dropdownMenuButton1">
-                    <li><a class="dropdown-item fw-semibold" href="/profile">My Profile</a></li>
-                    <li>
-                      <hr class="dropdown-divider">
-                    </li>
-                    <li><a class="dropdown-item" href="/logout">Log out</a></li>
+                    <% if(currUser && currUser.role==='admin' ) { %>
+                      <li><a class="dropdown-item fw-semibold" href="/admin"><i
+                            class="fa-solid fa-shield-halved me-2"></i>Admin Dashboard</a></li>
+                      <li>
+                        <hr class="dropdown-divider">
+                      </li>
+                      <% } %>
+                        <li><a class="dropdown-item fw-semibold" href="/profile"><i
+                              class="fa-regular fa-user me-2"></i>My Profile</a></li>
+                        <li>
+                          <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="/logout"><i
+                              class="fa-solid fa-arrow-right-from-bracket me-2"></i>Log out</a></li>
                   </ul>
                 </div>
 
                 <!-- Mobile Avatar Hamburger -->
-                <div class="mobile-avatar-pill d-md-none ms-1" id="mobileMenuBtn">
-                  <i class="fa-solid fa-bars"></i>
+                <div class="mobile-avatar-pill d-md-none ms-1" id="mobileMenuBtn"
+                  style="display:flex;align-items:center;gap:6px;">
+                  <% if(locals.currProfile && currProfile.profileImg && currProfile.profileImg.url) { %>
+                    <img src="<%= currProfile.profileImg.url %>" alt="Avatar"
+                      style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
+                    <% } %>
+                      <i class="fa-solid fa-bars"></i>
                 </div>
                 <% } else { %>
                   <!-- Mobile Login Hamburger -->
@@ -83,10 +96,10 @@
                   </button>
                   <% } %>
 
-      <!-- Dark Mode Toggle Desktop -->
-      <button class="dark-mode-toggle ms-1 d-none d-md-flex" aria-label="Toggle dark mode">
-        <i class="fa-solid fa-moon dark-mode-icon"></i>
-      </button>
+                    <!-- Dark Mode Toggle Desktop -->
+                    <button class="dark-mode-toggle ms-1 d-none d-md-flex" aria-label="Toggle dark mode">
+                      <i class="fa-solid fa-moon dark-mode-icon"></i>
+                    </button>
 
     </div>
 
@@ -113,7 +126,8 @@
   </div>
 
   <div class="drawer-nav">
-    <a class="drawer-link dark-mode-toggle" href="#" onclick="event.preventDefault();"><i class="fa-solid fa-moon dark-mode-icon"></i><span>Toggle Theme</span></a>
+    <a class="drawer-link dark-mode-toggle" href="#" onclick="event.preventDefault();"><i
+        class="fa-solid fa-moon dark-mode-icon"></i><span>Toggle Theme</span></a>
     <div class="drawer-divider"></div>
     <a class="drawer-link" href="/explore"><i class="fa-solid fa-compass"></i><span>Explore</span></a>
     <a class="drawer-link" href="/explore/new"><i class="fa-solid fa-plus"></i><span>Add New Listing</span></a>

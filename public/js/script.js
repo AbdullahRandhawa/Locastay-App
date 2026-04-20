@@ -26,6 +26,12 @@
       localStorage.setItem(KEY, 'light');
       icons.forEach(icon => icon.className = 'fa-solid fa-moon dark-mode-icon');
     }
+
+    // Attempt to dynamically sync the theme with the external chat iframe via postMessage API
+    const iframe = document.getElementById('msgIframe');
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({ type: 'THEME_CHANGE', theme: dark ? 'dark' : 'light' }, '*');
+    }
   }
 
   document.addEventListener('DOMContentLoaded', function () {

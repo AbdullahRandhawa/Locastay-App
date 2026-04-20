@@ -9,7 +9,7 @@ const profileSchema = new Schema({
     profileImg: {
         url: {
             type: String,
-            default: "https://images.pexels.com/photos/13305201/pexels-photo-13305201.jpeg"
+            default: "https://res.cloudinary.com/dlvbwgybn/raw/upload/v1776667501/xtxev1yntpsjl42mhjlx.jpg"
         },
         filename: String
     },

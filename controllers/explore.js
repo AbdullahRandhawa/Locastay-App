@@ -114,6 +114,11 @@ module.exports.renderNewForm = (req, res) => {
 // 4. CREATE LISTING (The Heavy Lifter)
 module.exports.createListing = async (req, res) => {
 
+    // Strip conditionGrade for Service listings — it is not applicable
+    if (req.body.listing.mainCategory === 'Service') {
+        delete req.body.listing.conditionGrade;
+    }
+
     const response = await geocodingClient
         .forwardGeocode({
             query: `${req.body.listing.city}, ${req.body.listing.country}`,
@@ -121,9 +126,8 @@ module.exports.createListing = async (req, res) => {
         })
         .send();
 
-
-
     const newListing = new Listing(req.body.listing);
+    newListing.conditionGrade = newListing.mainCategory === 'Service' ? undefined : newListing.conditionGrade;
 
 
 
@@ -224,6 +228,11 @@ module.exports.renderEditForm = async (req, res) => {
 module.exports.editListing = async (req, res) => {
     const { id } = req.params;
 
+    // Strip conditionGrade for Service listings — it is not applicable
+    if (req.body.listing.mainCategory === 'Service') {
+        delete req.body.listing.conditionGrade;
+    }
+
     const response = await geocodingClient
         .forwardGeocode({
             query: `${req.body.listing.city}, ${req.body.listing.country}`,
@@ -235,6 +244,11 @@ module.exports.editListing = async (req, res) => {
 
     // Update all fields from the form
     listing.set({ ...req.body.listing });
+
+    // Ensure conditionGrade is not stored for Service listings
+    if (listing.mainCategory === 'Service') {
+        listing.conditionGrade = undefined;
+    }
 
     // Update geometry
     if (response.body.features.length > 0) {

@@ -819,3 +819,93 @@ body:has(.agent-container) .container.flex-grow-1>.row {
         align-items: center;
     }
 }
+
+/* ==========================================================================
+   Dark Mode Overrides
+   ========================================================================== */
+
+[data-theme="dark"] .agent-container { background: #141414; }
+
+[data-theme="dark"] .agent-history,
+[data-theme="dark"] .agent-listings {
+    background: var(--bg-secondary);
+    border-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .history-header,
+[data-theme="dark"] .listings-header {
+    background: var(--bg-tertiary);
+    border-bottom-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .history-header h5,
+[data-theme="dark"] .listings-header h5 {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .history-item { color: var(--text-muted); }
+[data-theme="dark"] .history-item:hover { background: var(--bg-tertiary); color: var(--text-dark); }
+[data-theme="dark"] .history-item.active { background: rgba(255, 56, 92, 0.15); color: var(--primary); }
+
+[data-theme="dark"] .agent-chat { background: var(--bg-main); }
+
+[data-theme="dark"] .welcome-screen h4 { color: var(--text-dark); }
+[data-theme="dark"] .welcome-screen p { color: var(--text-muted); }
+
+[data-theme="dark"] .quick-btn {
+    background: var(--bg-secondary);
+    border-color: var(--bg-tertiary);
+    color: var(--text-dark);
+}
+[data-theme="dark"] .quick-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+[data-theme="dark"] .agent-message .message-bubble {
+    background: var(--bg-secondary);
+    color: var(--text-dark);
+    border-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .message-bubble h1,
+[data-theme="dark"] .message-bubble h2,
+[data-theme="dark"] .message-bubble h3,
+[data-theme="dark"] .message-bubble h4,
+[data-theme="dark"] .message-bubble h5,
+[data-theme="dark"] .message-bubble h6 {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .message-bubble strong { color: var(--text-dark); }
+[data-theme="dark"] .message-bubble code { background: var(--bg-tertiary); }
+
+[data-theme="dark"] .typing-dots {
+    background: var(--bg-secondary);
+    border-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .input-wrapper {
+    background: var(--bg-secondary);
+    border-color: var(--bg-tertiary);
+}
+[data-theme="dark"] #chatInput { color: var(--text-dark); }
+[data-theme="dark"] #chatInput::placeholder { color: var(--text-muted); }
+
+[data-theme="dark"] .sidebar-listing-card {
+    background: var(--bg-secondary);
+    border-color: var(--bg-tertiary);
+}
+[data-theme="dark"] .sidebar-listing-card:hover { border-color: var(--primary); }
+[data-theme="dark"] .listing-card-title { color: var(--text-dark); }
+[data-theme="dark"] .listing-card-price { color: var(--text-dark); }
+[data-theme="dark"] .listing-card-img { background: var(--bg-tertiary); }
+[data-theme="dark"] .match-count { background: var(--bg-tertiary); color: var(--text-dark); }
+
+[data-theme="dark"] .history-toggle,
+[data-theme="dark"] .listings-toggle {
+    background: var(--bg-secondary);
+    border-color: var(--bg-tertiary);
+    color: var(--text-dark);
+}

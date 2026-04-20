@@ -56,9 +56,15 @@
 
                                     <!-- Role -->
                                     <td class="py-3 border-0" style="border-bottom: 1px solid var(--bg-tertiary) !important;">
-                                        <span class="badge rounded-pill <%= u.role === 'admin' ? 'bg-primary text-white' : '' %>" style="padding: 0.5rem 0.8rem; <%= u.role !== 'admin' ? 'background-color: var(--bg-secondary); color: var(--text-dark); border: 1px solid var(--bg-tertiary);' : '' %>">
-                                            <i class="fa-solid <%= u.role === 'admin' ? 'fa-shield-halved' : 'fa-user' %> me-1"></i><%= u.role.charAt(0).toUpperCase() + u.role.slice(1) %>
-                                        </span>
+                                        <% if(u.role === 'admin') { %>
+                                            <span class="badge rounded-pill bg-primary text-white" style="padding: 0.5rem 0.8rem;">
+                                                <i class="fa-solid fa-shield-halved me-1"></i>Admin
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge rounded-pill" style="padding: 0.5rem 0.8rem; background-color: var(--bg-secondary); color: var(--text-dark); border: 1px solid var(--bg-tertiary);">
+                                                <i class="fa-solid fa-user me-1"></i><%= u.role.charAt(0).toUpperCase() + u.role.slice(1) %>
+                                            </span>
+                                        <% } %>
                                     </td>
 
                                     <!-- Status Badges -->

@@ -22,7 +22,7 @@ module.exports.listingSchema = joi.object({
         // Rental & Condition
         listingType: joi.string().required().valid('Sale', 'Rent'),
         rentalPeriod: joi.string().valid('hour', 'day', 'week', 'month', 'flat', 'N/A').required(),
-        conditionGrade: joi.number().min(1).max(10).optional(),
+        conditionGrade: joi.number().min(1).max(10).optional().allow('', null),
 
         // Dynamic Specifications (Optional because they vary by category)
         specifications: joi.object({

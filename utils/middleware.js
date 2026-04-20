@@ -60,6 +60,30 @@ module.exports.validateListing = (req, res, next) => {
     }
 }
 
+// ─── isAdmin ──────────────────────────────────────────────────────────────────
+// Only allows admin role users through.
+module.exports.isAdmin = (req, res, next) => {
+    if (!req.user) {
+        req.flash('error', 'You must be logged in.');
+        return res.redirect('/login');
+    }
+    if (req.user.role !== 'admin') {
+        req.flash('error', 'Access denied. Admins only.');
+        return res.redirect('/explore');
+    }
+    next();
+};
+
+// ─── canCreateListing ─────────────────────────────────────────────────────────
+// Blocks users whose listing creation has been restricted by an admin.
+module.exports.canCreateListing = (req, res, next) => {
+    if (req.user && req.user.listingRestricted) {
+        req.flash('error', 'Your account has been restricted from creating listings. Please contact an admin.');
+        return res.redirect('/explore');
+    }
+    next();
+};
+
 module.exports.validateReview = (req, res, next) => {
     let { error } = reviewSchema.validate(req.body);
     if (error) {

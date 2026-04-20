@@ -775,6 +775,16 @@ a:hover {
   font-weight: 700;
   font-size: 1.2rem;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* When avatar has a photo, clear the background */
+.host-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 /* -- Listing detail white card -- */
@@ -1113,7 +1123,7 @@ a:hover {
 [data-theme="dark"] .card-body  { background-color: transparent; }
 
 /* Dark mode toggle button */
-.dark-mode-toggle {
+button.dark-mode-toggle {
   background: none;
   border: 1.5px solid var(--bg-tertiary);
   border-radius: 50%;
@@ -1128,7 +1138,7 @@ a:hover {
   transition: all var(--transition-fast);
   flex-shrink: 0;
 }
-.dark-mode-toggle:hover {
+button.dark-mode-toggle:hover {
   background-color: var(--bg-secondary);
   color: var(--text-dark);
   border-color: var(--text-muted);

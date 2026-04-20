@@ -24,7 +24,15 @@ const userSchema = new Schema({
     role: {
         type: String,
         enum: ['user', 'admin'],
-        default: 'user',  // All new users are regular users by default
+        default: 'user',
+    },
+    isDisabled: {
+        type: Boolean,
+        default: false,  // Admin can block this user from logging in
+    },
+    listingRestricted: {
+        type: Boolean,
+        default: false,  // Admin can block this user from creating listings
     }
 });
 

@@ -11,7 +11,10 @@ const upload = multer({ storage });
 
 
 
-// Profile Route
+// Public Profile Route (does not require login)
+router.get('/public/:id', asyncWrap(profileController.publicProfile));
+
+// Profile Route (Private)
 router.get('/', isLoggedIn, asyncWrap(profileController.profile));
 
 

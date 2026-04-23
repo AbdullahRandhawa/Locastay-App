@@ -5,7 +5,7 @@ const { isLoggedIn } = require('../utils/middleware');
 const asyncWrap = require('../utils/asyncWrap');
 const rateLimit = require('express-rate-limit');
 
-// Limit each user to 15 messages per minute on the chat endpoint
+// Limit each user  to 15 messages per minute on the chat endpoint
 const messageLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
     max: 15,

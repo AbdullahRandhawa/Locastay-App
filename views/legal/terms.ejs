@@ -1,0 +1,163 @@
+<% layout('/layouts/boilerplate') %>
+<% locals.showBackBtn = true; %>
+
+  <style>
+    .legal-page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2.5rem 1rem 3rem;
+    }
+
+    .legal-page h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin-bottom: 0.4rem;
+    }
+
+    .legal-page .legal-meta {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .legal-section {
+      margin-bottom: 2rem;
+    }
+
+    .legal-section h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 0.6rem;
+      border-left: 3px solid var(--primary);
+      padding-left: 0.75rem;
+    }
+
+    .legal-section p,
+    .legal-section li {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.75;
+    }
+
+    .legal-section ul {
+      padding-left: 1.4rem;
+      margin-top: 0.5rem;
+    }
+
+    .legal-divider {
+      border: none;
+      border-top: 1px solid var(--bg-tertiary);
+      margin: 2.5rem 0;
+    }
+
+    .legal-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .legal-nav a {
+      background: var(--bg-secondary);
+      color: var(--text-dark);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.35rem 0.9rem;
+      border-radius: 20px;
+      text-decoration: none;
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+
+    .legal-nav a:hover,
+    .legal-nav a.active {
+      background: var(--primary);
+      color: #fff;
+    }
+  </style>
+
+  <div class="legal-page">
+    <h1>Terms of Service</h1>
+    <p class="legal-meta">Last updated: January 2025 &middot; Effective immediately</p>
+
+
+    <div class="legal-section">
+      <h2>1. About Rentlyst</h2>
+      <p>Rentlyst is an online marketplace that connects buyers, sellers, renters, and service providers. We provide a
+        platform ("the Platform") to facilitate listings and communications between users. <strong>Rentlyst is a
+          mediator only</strong> — we are not a party to any transaction that occurs between users.</p>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>2. Acceptance of Terms</h2>
+      <p>By accessing or using the Platform, you confirm that you are at least 18 years of age and agree to be bound by
+        these Terms of Service. If you do not agree, please do not use Rentlyst.</p>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>3. Rentlyst's Role — We Are a Marketplace Only</h2>
+      <p>Rentlyst provides a window — a digital space where listings are posted and users connect. We do
+        <strong>not</strong>:</p>
+      <ul>
+        <li>Own, manufacture, inspect, or verify any listed item, vehicle, property, or service</li>
+        <li>Guarantee the quality, safety, legality, or accuracy of any listing</li>
+        <li>Participate in or supervise any transaction, handover, or payment</li>
+        <li>Intervene in or mediate disputes between users after a transaction occurs</li>
+      </ul>
+      <p>All transactions are solely between the buyer and seller/host. Rentlyst bears no liability for any loss,
+        damage, injury, or dispute arising from a transaction conducted through the Platform.</p>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>4. User Responsibilities</h2>
+      <p>You are solely responsible for:</p>
+      <ul>
+        <li>The accuracy and legality of your listings and the items/services you offer</li>
+        <li>Verifying the identity of the other party before meeting or transacting</li>
+        <li>Exercising personal judgment and care during any exchange</li>
+        <li>Complying with all applicable local, national, and international laws</li>
+      </ul>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>5. Prohibited Conduct</h2>
+      <p>You agree not to post listings for illegal items, engage in fraud or impersonation, harass other users, or
+        attempt to circumvent the Platform's systems. Rentlyst reserves the right to remove listings or suspend accounts
+        that violate these rules.</p>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>6. Limitation of Liability</h2>
+      <p>To the maximum extent permitted by law, Rentlyst, its directors, employees, and agents shall not be liable for
+        any indirect, incidental, special, consequential, or punitive damages arising out of your use of the Platform,
+        including but not limited to financial loss, property damage, or personal injury arising from any listing or
+        transaction.</p>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>7. Changes to Terms</h2>
+      <p>We may revise these Terms at any time. Continued use of the Platform after changes are posted constitutes your
+        acceptance of the new Terms. Please review this page periodically.</p>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>8. Contact</h2>
+      <p>Questions about these Terms? Visit our <a href="/help" class="legal-link">Help Center</a> to get in touch with
+        the Rentlyst team.</p>
+    </div>
+  </div>

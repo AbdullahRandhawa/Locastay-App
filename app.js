@@ -161,6 +161,22 @@ app.get('/messages', isLoggedIn, async (req, res) => {
     }
 });
 
+// Legal Pages
+app.get('/terms', (req, res) => res.render('legal/terms.ejs'));
+app.get('/privacy', (req, res) => res.render('legal/privacy.ejs'));
+app.get('/sitemap', (req, res) => res.render('legal/sitemap.ejs'));
+app.get('/help', async (req, res) => {
+    try {
+        // Find first admin user so the Help Center can link directly to their chat
+        const adminUser = await User.findOne({ role: 'admin' }).lean();
+        const adminFirebaseUid = adminUser ? adminUser.firebaseUid : null;
+        res.render('legal/help.ejs', { adminFirebaseUid });
+    } catch (err) {
+        console.error('Help page error:', err);
+        res.render('legal/help.ejs', { adminFirebaseUid: null });
+    }
+});
+
 // const listingController = require('./controllers/explore.js'); // removed unused
 // app.get('/', asyncWrap(listingController.renderHome)); // Handled by homeRoute
 

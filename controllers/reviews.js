@@ -2,7 +2,21 @@ const Review = require('../models/review.js');
 const Listing = require("../models/listing.js");
 const openai = require('../utils/openai');
 
-const LLM_MODEL = process.env.OPENROUTER_LLM_MODEL || 'meta-llama/llama-3.1-8b-instruct:free';
+const rawModels = process.env.OPENROUTER_FALLBACK_MODELS;
+const LLM_MODELS = rawModels.split(',').map(m => m.trim()).filter(Boolean);
+
+async function callLLMWithFallback(messages, max_tokens) {
+    let lastErr;
+    for (const model of LLM_MODELS) {
+        try {
+            return await openai.chat.completions.create({ model, messages, max_tokens });
+        } catch (err) {
+            console.warn(`[ReviewSummary Fallback Warning] Model ${model} failed, trying next if available...`, err.message);
+            lastErr = err;
+        }
+    }
+    throw lastErr;
+}
 
 /**
  * Runs in the background after EVERY new review.
@@ -47,11 +61,10 @@ Your task — follow these rules strictly:
 5. LENGTH: Keep the output to 2-6 sentences. Be concise but comprehensive — do not omit details to save space.
 6. FORMAT: Output ONLY the summary paragraph. No prefixes like "Summary:", no bullet points, no markdown.`;
 
-        const result = await openai.chat.completions.create({
-            model: LLM_MODEL,
-            messages: [{ role: 'user', content: prompt }],
-            max_tokens: 1000
-        });
+        const result = await callLLMWithFallback(
+            [{ role: 'user', content: prompt }],
+            1000
+        );
 
         // Safety check for invalid API responses (e.g. rate limits, model offline)
         if (!result || !result.choices || result.choices.length === 0 || !result.choices[0].message) {
@@ -60,10 +73,10 @@ Your task — follow these rules strictly:
         }
 
         const rawContent = result.choices[0].message.content;
-        
+
         if (!rawContent || rawContent.trim() === '') {
-             console.error('[ReviewSummary] Model returned empty content.');
-             return;
+            console.error('[ReviewSummary] Model returned empty content.');
+            return;
         }
 
         const summary = rawContent.trim();
@@ -103,8 +116,8 @@ module.exports.createReview = async (req, res, next) => {
         req.flash('error', 'Review comment cannot be empty.');
         return res.redirect(`/explore/${req.params.id}`);
     }
-    if (comment.trim().length > 1000) {
-        req.flash('error', 'Review comment must be 1000 characters or fewer.');
+    if (comment.trim().length > 450) {
+        req.flash('error', 'Review comment must be 450 characters or fewer.');
         return res.redirect(`/explore/${req.params.id}`);
     }
 

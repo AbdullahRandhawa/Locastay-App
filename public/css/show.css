@@ -1,0 +1,199 @@
+/* =====================================================
+   show.css — Listing Detail Page + Shared Mobile Styles
+   ===================================================== */
+
+/* ── Mobile Back Button (in navbar) ──────────────────── */
+.mobile-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-secondary);
+  color: var(--text-dark);
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.18s, box-shadow 0.18s, transform 0.15s;
+}
+
+.mobile-back-btn:hover,
+.mobile-back-btn:active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  transform: translateX(-2px);
+}
+
+/* ── Header ─────────────────────────────────────────── */
+.show-page-title {
+  margin-bottom: 0.2rem;
+}
+
+/* Badge strip */
+.show-badge-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+}
+
+.show-badge-strip .badge {
+  font-size: 0.85rem;
+  padding: 0.4em 0.85em;
+}
+
+/* ── Host Card ───────────────────────────────────────── */
+.host-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.host-card {
+  padding: 1.25rem;
+  transition: box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.host-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.host-avatar-lg {
+  width: 55px;
+  height: 55px;
+  font-size: 1.4rem;
+}
+
+.host-portfolio-btn {
+  padding: 0.5rem 1rem;
+  pointer-events: none;
+}
+
+.host-msg-btn {
+  padding: 0.5rem 1rem;
+}
+
+/* ── Price Block ─────────────────────────────────────── */
+.price-block {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.price-block .price-amount {
+  font-size: 2.2rem;
+}
+
+/* ── Condition ───────────────────────────────────────── */
+.condition-label {
+  font-size: 1.05rem;
+}
+
+.condition-bar {
+  height: 10px;
+  border-radius: 20px;
+  background-color: var(--bg-tertiary);
+  margin-top: 0.5rem;
+}
+
+.condition-bar .progress-bar {
+  border-radius: 20px;
+}
+
+/* ── Specifications ──────────────────────────────────── */
+.section-subheading {
+  font-size: 1.05rem;
+}
+
+.spec-value-bold {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+/* ── Address row ─────────────────────────────────────── */
+.address-row {
+  border-top: 1px solid var(--bg-tertiary);
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+}
+
+.address-row span {
+  font-size: 0.95rem;
+}
+
+/* ── Description ─────────────────────────────────────── */
+.listing-description {
+  text-align: justify;
+  margin-bottom: 0;
+}
+
+/* ── Owner Actions ───────────────────────────────────── */
+.owner-actions-btn-delete {
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 1.4rem;
+  font-weight: 600;
+}
+
+/* ── AI Summary Card ─────────────────────────────────── */
+.ai-summary-card-bordered {
+  border: 1px solid var(--primary);
+}
+
+.ai-summary-text {
+  text-align: justify;
+  font-size: 0.95rem;
+}
+
+.ai-summary-note {
+  font-size: 0.75rem;
+  color: var(--text-light);
+}
+
+/* ── Map section ─────────────────────────────────────── */
+.map-address-text {
+  font-size: 0.95rem;
+}
+
+.map-wrapper {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* ── Review Cards ────────────────────────────────────── */
+.review-card {
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: var(--radius-md);
+}
+
+.review-comment {
+  text-align: justify;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+}
+
+.review-delete-btn {
+  border-radius: var(--radius-sm);
+}
+
+/* ── Leave a Review ──────────────────────────────────── */
+.review-label {
+  font-size: 0.9rem;
+}
+
+.review-textarea {
+  background: var(--bg-secondary);
+  border: 1px solid var(--bg-tertiary);
+  color: var(--text-dark);
+  border-radius: var(--radius-md);
+}
+
+.review-submit-btn {
+  padding: 0.5rem 1.5rem;
+}

@@ -1,0 +1,168 @@
+<% layout('/layouts/boilerplate') %>
+<% locals.showBackBtn = true; %>
+
+  <style>
+    .legal-page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2.5rem 1rem 3rem;
+    }
+
+    .legal-page h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin-bottom: 0.4rem;
+    }
+
+    .legal-page .legal-meta {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .legal-section {
+      margin-bottom: 2rem;
+    }
+
+    .legal-section h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 0.6rem;
+      border-left: 3px solid var(--primary);
+      padding-left: 0.75rem;
+    }
+
+    .legal-section p,
+    .legal-section li {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.75;
+    }
+
+    .legal-section ul {
+      padding-left: 1.4rem;
+      margin-top: 0.5rem;
+    }
+
+    .legal-divider {
+      border: none;
+      border-top: 1px solid var(--bg-tertiary);
+      margin: 2.5rem 0;
+    }
+
+    .legal-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .legal-nav a {
+      background: var(--bg-secondary);
+      color: var(--text-dark);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.35rem 0.9rem;
+      border-radius: 20px;
+      text-decoration: none;
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+
+    .legal-nav a:hover,
+    .legal-nav a.active {
+      background: var(--primary);
+      color: #fff;
+    }
+  </style>
+
+  <div class="legal-page">
+    <h1>Privacy Policy</h1>
+    <p class="legal-meta">Last updated: January 2025 &middot; Effective immediately</p>
+
+    <div class="legal-section">
+      <h2>1. What We Collect</h2>
+      <p>When you use Rentlyst, we may collect the following types of information:</p>
+      <ul>
+        <li><strong>Account Data</strong>: Your name, email address, and profile information provided during sign-up
+        </li>
+        <li><strong>Listing Data</strong>: Content, images, descriptions, and metadata you submit in your listings</li>
+        <li><strong>Usage Data</strong>: Pages visited, search queries, device type, and browser type</li>
+        <li><strong>Communications</strong>: Messages sent between users through the Platform's messaging system</li>
+      </ul>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>2. How We Use Your Information</h2>
+      <p>We use the information collected to:</p>
+      <ul>
+        <li>Operate, maintain, and improve the Rentlyst platform</li>
+        <li>Display your profile and listings to other users</li>
+        <li>Enable messaging and communication between users</li>
+        <li>Power AI-driven features such as the Rentlyst Agent assistant</li>
+        <li>Send important account and service-related notifications</li>
+        <li>Detect and prevent fraud, spam, or abuse</li>
+      </ul>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>3. Data Sharing</h2>
+      <p>Rentlyst does <strong>not sell</strong> your personal data to third parties. We may share data with:</p>
+      <ul>
+        <li><strong>Service Providers</strong>: Trusted vendors that help us run the platform (cloud hosting, image
+          storage, authentication)</li>
+        <li><strong>Legal Requirements</strong>: When required by law or to protect the rights, property, or safety of
+          Rentlyst or its users</li>
+      </ul>
+      <p>Your listing content (title, images, price) is public by design and visible to all visitors.</p>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>4. Cookies & Tracking</h2>
+      <p>We use session cookies to keep you logged in and to remember your preferences. We do not use third-party
+        advertising trackers. You may disable cookies in your browser settings, though this may affect your ability to
+        use certain features.</p>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>5. Data Retention</h2>
+      <p>We retain your data for as long as your account is active or as needed to provide services. You may request
+        deletion of your account and associated data by contacting us through the <a href="/help"
+          class="legal-link">Help Center</a>.</p>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>6. Security</h2>
+      <p>We implement industry-standard security measures including encrypted connections (HTTPS), hashed authentication
+        tokens, and access controls. However, no online platform can guarantee absolute security. Use the Platform at
+        your own risk.</p>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>7. Children's Privacy</h2>
+      <p>Rentlyst is not intended for individuals under the age of 18. We do not knowingly collect data from children.
+        If you believe a minor has created an account, please contact us immediately via the <a href="/help"
+          class="legal-link">Help Center</a>.</p>
+    </div>
+
+    <hr class="legal-divider">
+
+    <div class="legal-section">
+      <h2>8. Changes to This Policy</h2>
+      <p>We may update this Privacy Policy from time to time. We will notify registered users of material changes by
+        email or by a notice on the Platform. Please review this page periodically.</p>
+    </div>
+  </div>

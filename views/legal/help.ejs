@@ -1,0 +1,303 @@
+<% layout('/layouts/boilerplate') %>
+<% locals.showBackBtn = true; %>
+
+  <style>
+    .legal-page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2.5rem 1rem 3rem;
+    }
+
+    .legal-page h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin-bottom: 0.4rem;
+    }
+
+    .legal-page .legal-meta {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .legal-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .legal-nav a {
+      background: var(--bg-secondary);
+      color: var(--text-dark);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.35rem 0.9rem;
+      border-radius: 20px;
+      text-decoration: none;
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+
+    .legal-nav a:hover,
+    .legal-nav a.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .legal-divider {
+      border: none;
+      border-top: 1px solid var(--bg-tertiary);
+      margin: 2.5rem 0;
+    }
+
+    /* Help cards */
+    .help-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .help-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 1.25rem 1rem;
+      text-align: center;
+    }
+
+    .help-card i {
+      font-size: 1.6rem;
+      color: var(--primary);
+      margin-bottom: 0.65rem;
+      display: block;
+    }
+
+    .help-card h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 0.3rem;
+    }
+
+    .help-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* Contact box */
+    .contact-box {
+      background: var(--bg-main);
+      border: 1px solid var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+      padding: 2rem 1.75rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .contact-box h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 0.4rem;
+    }
+
+    .contact-box p {
+      color: var(--text-muted);
+      font-size: 0.94rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Admin contact card - mirrors listing show page host-info */
+    .admin-contact-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.25rem;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .admin-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--text-dark);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .admin-info {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .admin-info .admin-name {
+      font-weight: 700;
+      color: var(--text-dark);
+      font-size: 0.95rem;
+    }
+
+    .admin-info .admin-role {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
+
+    .btn-chat-admin {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 1.4rem;
+      font-weight: 600;
+      font-size: 0.92rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background var(--transition-fast), transform var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .btn-chat-admin:hover {
+      background: var(--primary-hover);
+      color: #fff;
+      transform: scale(0.98);
+    }
+
+    .btn-chat-admin-outline {
+      background: transparent;
+      color: var(--text-dark);
+      border: 1px solid var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 1.4rem;
+      font-weight: 600;
+      font-size: 0.92rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: box-shadow var(--transition-fast);
+    }
+
+    .btn-chat-admin-outline:hover {
+      box-shadow: var(--shadow-sm);
+      color: var(--text-dark);
+    }
+
+    .faq-item {
+      margin-bottom: 1.2rem;
+    }
+
+    .faq-item h3 {
+      font-size: 0.97rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 0.3rem;
+    }
+
+    .faq-item p {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+  </style>
+
+  <div class="legal-page">
+    <h1>Help Center</h1>
+    <p class="legal-meta">Answers, support, and a direct line to the Rentlyst team</p>
+
+
+
+    <!-- Quick Info Cards -->
+    <div class="help-cards">
+      <div class="help-card">
+        <i class="fa-solid fa-store"></i>
+        <h3>Rentlyst is a Marketplace</h3>
+        <p>We connect buyers & sellers. We are not responsible for transactions between users.</p>
+      </div>
+      <div class="help-card">
+        <i class="fa-solid fa-shield-halved"></i>
+        <h3>Stay Safe</h3>
+        <p>Always meet in public, verify the item in person, and never pay upfront to strangers.</p>
+      </div>
+      <div class="help-card">
+        <i class="fa-solid fa-circle-question"></i>
+        <h3>Disputes</h3>
+        <p>Issues between users must be resolved between themselves. We provide the window, not the guarantee.</p>
+      </div>
+    </div>
+
+    <!-- Contact Admin -->
+    <div class="contact-box">
+      <h2><i class="fa-solid fa-headset me-2" style="color: var(--primary);"></i>Contact Support</h2>
+      <p>Have a question, a report, or need help with your account? Send a direct message to the Rentlyst team below.
+        We'll get back to you as soon as possible.</p>
+
+      <div class="admin-contact-card">
+        <div class="admin-avatar">R</div>
+        <div class="admin-info">
+          <div class="admin-name">Rentlyst Support</div>
+          <div class="admin-role">Platform Administrator</div>
+        </div>
+        <% if (currUser && adminFirebaseUid) { %>
+          <a href="/messages?receiverId=<%= adminFirebaseUid %>" class="btn-chat-admin">
+            <i class="fa-regular fa-comment-dots"></i> Chat with Support
+          </a>
+          <% } else if (!currUser) { %>
+            <a href="/login" class="btn-chat-admin">
+              <i class="fa-solid fa-right-to-bracket"></i> Log in to Chat
+            </a>
+            <% } else { %>
+              <span class="btn-chat-admin-outline" style="cursor:default; opacity:0.6;">
+                <i class="fa-solid fa-circle-exclamation"></i> Support unavailable
+              </span>
+              <% } %>
+      </div>
+
+      <p style="font-size:0.85rem; color: var(--text-muted); margin:0;">
+        <i class="fa-solid fa-clock me-1"></i>Typical response time: within 24 hours &middot;
+        Available Monday to Saturday
+      </p>
+    </div>
+
+    <hr class="legal-divider">
+
+    <!-- FAQ -->
+    <h2 style="font-size:1.2rem; font-weight:700; color:var(--text-dark); margin-bottom:1.25rem;">Frequently Asked
+      Questions</h2>
+
+    <div class="faq-item">
+      <h3>How do I post a listing?</h3>
+      <p>Log into your account, then click "Add Listing" in the navbar. Fill in the details, upload images, and submit.
+      </p>
+    </div>
+    <div class="faq-item">
+      <h3>Is Rentlyst free to use?</h3>
+      <p>Yes. Creating an account and posting listings is completely free. Rentlyst charges no commission on
+        transactions.</p>
+    </div>
+    <div class="faq-item">
+      <h3>I found a scam listing. What do I do?</h3>
+      <p>Contact us immediately through the chat above. Include the listing URL and details. We will review and remove
+        it promptly.</p>
+    </div>
+    <div class="faq-item">
+      <h3>How do I delete my account?</h3>
+      <p>Send us a message via the support chat above requesting account deletion. We will process it within 48 hours.
+      </p>
+    </div>
+    <div class="faq-item">
+      <h3>Can Rentlyst resolve a payment dispute?</h3>
+      <p>Rentlyst is a marketplace mediator only. We do not process payments and cannot intervene in financial disputes
+        between users. Always use safe payment methods and meet in person where possible.</p>
+    </div>
+  </div>

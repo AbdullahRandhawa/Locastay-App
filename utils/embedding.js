@@ -1,6 +1,6 @@
 const openai = require('./openai');
 
-const EMBED_MODEL = process.env.OPENROUTER_EMBED_MODEL || 'nvidia/llama-nemotron-embed-vl-1b-v2:free';
+const EMBED_MODEL = process.env.OPENROUTER_EMBED_MODEL;
 
 /**
  * Generate a vector embedding for a text string using OpenRouter.
@@ -18,7 +18,7 @@ async function generateEmbedding(text, inputType = 'passage') {
             encoding_format: 'float',
             extra_body: { input_type: inputType }
         });
-        
+
         if (res.data && res.data.length > 0 && res.data[0].embedding) {
             return res.data[0].embedding;
         }
@@ -46,7 +46,7 @@ function cosineSimilarity(a, b) {
         normA += a[i] * a[i];
         normB += b[i] * b[i];
     }
-    
+
     if (normA === 0 || normB === 0) return 0;
     return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }

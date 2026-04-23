@@ -3,29 +3,14 @@ const Profile = require('../models/profile');
 const Listing = require('../models/listing');
 const { generateEmbedding, cosineSimilarity } = require('../utils/embedding');
 const openai = require('../utils/openai');
+const CATEGORIES = require('../utils/categories');
 
 const rawModels = process.env.OPENROUTER_FALLBACK_MODELS || process.env.OPENROUTER_LLM_MODEL || "";
 const LLM_MODELS = rawModels.split(',').map(m => m.trim()).filter(Boolean);
 
-const SYSTEM_PROMPT = `You are "Rentlyst Assistant" — a smart, friendly, and easy-going marketplace companion for the Rentlyst platform.
-
-Rentlyst is a multi-category buy/sell/rent marketplace covering:
-- **Vehicles**: Cars, motorcycles, bicycles, boats
-- **Properties**: Houses, apartments, shared rooms, land, vacation rentals
-- **Items**: Tech & mobiles, electronics, home appliances, furniture, clothes, sports gear, spare parts
-- **Services**: Home services (plumber, electrician), health & medical, IT & programming, creative & design, tutors, cleaning, events & photography, transportation
-
-Your core personality:
-- You are warm, helpful, and genuinely fun to talk to. You don't refuse things.
-- If someone asks you something off-topic (a joke, a riddle, general advice, small talk) — go ahead and answer it! Be natural about it.
-- After answering off-topic things, you may naturally and briefly mention something like "...and if you're looking for anything on Rentlyst, I'm here for that too!" — but keep it light, not preachy.
-- For marketplace queries: be proactive and RECOMMEND. Tell the user which listing is the best deal and why.
-- Be personalized: if you have profile context about the user (budget, location, preferences), actively use it.
-- Be insightful: comment on value for money, condition grade, location advantages.
-- Keep responses conversational and focused — 3-5 sentences for simple queries, more detail when comparing.
-- Never parrot raw data back — turn it into a genuine helpful recommendation.
-- Always end marketplace responses with a clear next step or recommendation.`;
-
+// Per-user message rate limiter — max 1 message per 2 seconds
+const messageCooldown = new Map();
+const MESSAGE_COOLDOWN_MS = 2000;
 
 // ==========================================
 // HELPER FUNCTIONS
@@ -62,27 +47,27 @@ async function summarizeUnsummarizedChats(userId) {
             const lastIdx = conv.lastSummarizedIndex || 0;
             const newMsgCount = totalMsgs - lastIdx;
 
-            if (newMsgCount < 5) continue;
+            if (newMsgCount < 3) continue;
 
             const newMessages = conv.messages.slice(lastIdx);
             const chatText = newMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
 
-            const summaryPrompt = `Extract useful facts about this user from the messages below. 
-Output ONLY labeled info like:
-Name: ...
-Budget: ...
-Location: ...
-Preference: ...
-Searched: ...
-Interest: ...
+            const summaryPrompt = `Analyze the chat to update the "Manager's Dossier" for this client.
+Focus ONLY on:
+- Buying/Renting Triggers: (What makes them say yes? Low price? Aesthetic? Location?)
+- Hard Objections: (What have they explicitly rejected? "Too far from city", "Too expensive".)
+- Personality Vibe: (Are they decisive, or do they need a push? Are they looking for luxury or a bargain?)
 
-Skip greetings, filler, and anything useless. If nothing useful, reply exactly: "NO_NEW_INFO"
+Rules:
+1. Write this as a short, punchy briefing for a replacement manager.
+2. If the user changed their mind (e.g. from Cars to Houses), note the pivot.
+3. If no new psychological insights are found, reply: "NO_NEW_INFO"
 
 Messages:
 ${chatText}`;
 
             const result = await callLLMWithFallback([{ role: 'user', content: summaryPrompt }], 300);
-            const summary = result.choices[0].message.content.trim();
+            const summary = (result?.choices?.[0]?.message?.content || '').trim();
 
             if (summary && !summary.includes('NO_NEW_INFO') && summary.length > 5) {
                 if (!profile.agentContext || profile.agentContext === 'No specific context gathered yet.') {
@@ -95,7 +80,7 @@ ${chatText}`;
                 if (profile.agentContext.length > 2000) {
                     const consolidatePrompt = `Merge this user profile into a clean labeled list. Remove duplicates, keep all unique facts. Use format "Label: value" per line.\n\n${profile.agentContext}`;
                     const cResult = await callLLMWithFallback([{ role: 'user', content: consolidatePrompt }], 400);
-                    const consolidated = cResult.choices[0].message.content.trim();
+                    const consolidated = (cResult?.choices?.[0]?.message?.content || '').trim();
                     if (consolidated && consolidated.length > 5) {
                         profile.agentContext = consolidated;
                     }
@@ -118,13 +103,13 @@ ${chatText}`;
  */
 function buildSlidingHistory(messages) {
     if (!messages || messages.length === 0) return [];
-    
+
     // Take the last 6 messages to keep context short and sweet
-    const recent = messages.slice(-6).map(m => ({ 
-        role: m.role === 'agent' ? 'assistant' : 'user', 
-        content: m.content 
+    const recent = messages.slice(-6).map(m => ({
+        role: m.role === 'agent' ? 'assistant' : 'user',
+        content: m.content
     }));
-    
+
     // Sanitize: OpenAI strictly forbids consecutive 'user' or 'assistant' messages.
     const sanitized = [];
     for (const msg of recent) {
@@ -134,7 +119,7 @@ function buildSlidingHistory(messages) {
             sanitized.push({ role: msg.role, content: msg.content });
         }
     }
-    
+
     // Ensure the last message in history isn't user (the new query handles that)
     if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') {
         sanitized.pop();
@@ -144,49 +129,102 @@ function buildSlidingHistory(messages) {
 }
 
 /**
- * Semantic listing search.
- * Tries native Atlas $vectorSearch first (fast, indexed).
- * Falls back to JS cosine similarity scan if Atlas index is not set up.
+ * Strict-to-Relaxed Vector Search.
+ * Attempt 1: Atlas $vectorSearch with all extracted filters applied (category + city + specs).
+ * Attempt 2: If zero results, relax spec filters but keep mainCategory + city + listingType locked.
+ * Fallback:  Pure JS cosine scan if Atlas index not available.
+ * Returns docs + a `isRelaxed` boolean flag so the agent knows to mention it.
  */
-async function searchListings(queryVector) {
-    // --- Attempt 1: MongoDB Atlas Vector Search (fast native C++ search) ---
-    try {
-        const results = await Listing.aggregate([
+async function performSearch(queryVector, filters = {}) {
+    const buildAtlasFilter = (includeSpecs) => {
+        const andClauses = [];
+        if (filters.mainCategory) andClauses.push({ mainCategory: { $eq: filters.mainCategory } });
+        if (filters.subCategory) andClauses.push({ subCategory: { $eq: filters.subCategory } });
+        if (filters.city) andClauses.push({ city: { $eq: filters.city } });
+        if (filters.listingType) andClauses.push({ listingType: { $eq: filters.listingType } });
+        if (includeSpecs && filters.specifications) {
+            const specs = filters.specifications;
+            if (specs.make) andClauses.push({ 'specifications.make': { $eq: specs.make } });
+            if (specs.year) andClauses.push({ 'specifications.year': { $eq: specs.year } });
+            if (specs.bedrooms) andClauses.push({ 'specifications.bedrooms': { $eq: specs.bedrooms } });
+        }
+        return andClauses.length > 0 ? { $and: andClauses } : undefined;
+    };
+
+    const runAtlasSearch = async (filter) => {
+        const pipeline = [
             {
                 $vectorSearch: {
                     index: 'listing_vector_index',
                     path: 'listingVector',
-                    queryVector: queryVector,
-                    numCandidates: 150,
-                    limit: 5
+                    queryVector,
+                    numCandidates: 200,
+                    limit: 10,
+                    ...(filter ? { filter } : {})
                 }
             },
             {
                 $project: {
                     title: 1, city: 1, listingType: 1, price: 1,
-                    rentalPeriod: 1, image: 1, searchContext: 1,
+                    rentalPeriod: 1, image: 1, searchContext: 1, mainCategory: 1,
                     score: { $meta: 'vectorSearchScore' }
                 }
-            },
-            { $match: { score: { $gte: 0.7 } } }
-        ]);
-        if (results.length >= 0) return results; // Even 0 results is a valid Atlas response
+            }
+        ];
+        return await Listing.aggregate(pipeline);
+    };
+
+    // --- Attempt 1: Atlas strict search (with specs) ---
+    try {
+        const strictFilter = buildAtlasFilter(true);
+
+        // NEW SAFETY GATE: 
+        // If the LLM failed to find a category AND there are no specs, 
+        // don't let Atlas return the whole database.
+        const isQueryEmpty = !filters.mainCategory && !filters.subCategory && !filters.city;
+
+        if (isQueryEmpty && (!queryVector || queryVector.length === 0)) {
+            console.log("[Search] Query is too vague, skipping search to prevent random results.");
+            const emptyResults = [];
+            emptyResults.isRelaxed = false;
+            return emptyResults;
+        }
+
+        const strictResults = await runAtlasSearch(strictFilter);
+        console.log(`[Search] Strict Atlas: ${strictResults.length} results`);
+        if (strictResults.length > 0) {
+            strictResults.isRelaxed = false;
+            return strictResults;
+        }
+
+        // --- Attempt 2: Relaxed (drop specs, keep category+city+type) ---
+        const relaxedFilter = buildAtlasFilter(false);
+        const relaxedResults = await runAtlasSearch(relaxedFilter);
+        console.log(`[Search] Relaxed Atlas: ${relaxedResults.length} results`);
+        relaxedResults.isRelaxed = relaxedResults.length > 0;
+        return relaxedResults;
+
     } catch (atlasErr) {
-        // Atlas index not set up yet — fall through to JS cosine fallback
-        console.warn('[Atlas Vector Search] Not available, falling back to JS cosine similarity:', atlasErr.message);
+        console.warn('[Atlas Vector Search] Not available, falling back to JS cosine scan:', atlasErr.message);
     }
 
-    // --- Fallback: JS cosine similarity scan (capped at 100 listings) ---
-    const listings = await Listing.find({ listingVector: { $exists: true, $ne: [] } })
-        .select('title city listingType price rentalPeriod image searchContext listingVector')
-        .sort({ updatedAt: -1 })
-        .limit(100);
+    // --- JS cosine fallback (no Atlas index) ---
+    const fallbackQuery = {
+        listingVector: { $exists: true, $ne: [] }
+    };
+    // Add these to make the fallback smarter
+    if (filters.mainCategory) fallbackQuery.mainCategory = filters.mainCategory;
+    if (filters.city) fallbackQuery.city = filters.city;
 
-    return listings
+    const listings = await Listing.find(fallbackQuery).limit(500);
+
+    const scored = listings
         .map(l => ({ ...l.toObject(), score: cosineSimilarity(queryVector, l.listingVector) }))
         .filter(l => l.score > 0.3)
         .sort((a, b) => b.score - a.score)
-        .slice(0, 5);
+        .slice(0, 10);
+    scored.isRelaxed = false;
+    return scored;
 }
 
 /**
@@ -260,24 +298,25 @@ module.exports.handleMessage = async (req, res) => {
             return res.status(400).json({ error: 'Message is too long. Please keep it under 800 characters.' });
         }
 
-        // ── OPTIMIZATION: Fire all independent DB/API calls simultaneously ──
-        // Conversation lookup, profile fetch, and embedding generation are all independent.
-        // Run them in parallel to save ~600-1000ms vs running them one by one.
-        const [existingConversation, userProfile, queryVector] = await Promise.all([
+        // ── Rate Limit: 1 message per 2 seconds per user ──
+        const userId = req.user._id.toString();
+        const now = Date.now();
+        const lastMsg = messageCooldown.get(userId) || 0;
+        if (now - lastMsg < MESSAGE_COOLDOWN_MS) {
+            return res.status(429).json({ error: 'Slow down! Wait a moment before sending another message.' });
+        }
+        messageCooldown.set(userId, now);
+
+        // ── Step 1: Rapid Local DB Fetches ──
+        const [existingConversation, userProfile] = await Promise.all([
             conversationId
                 ? Conversation.findOne({ _id: conversationId, user: req.user._id })
                 : Promise.resolve(null),
-            Profile.findOne({ user: req.user._id }),
-            generateEmbedding(message, 'query').catch(err => {
-                console.error('[Embedding] Failed:', err.message);
-                return null;
-            })
+            Profile.findOne({ user: req.user._id })
         ]);
 
-        // Resolve conversation object (use existing or create new)
         let conversation = existingConversation;
         if (!conversation) {
-            // New conversation — trigger background summarization of old chats
             summarizeUnsummarizedChats(req.user._id).catch(e => console.error(e));
             conversation = new Conversation({
                 user: req.user._id,
@@ -286,8 +325,6 @@ module.exports.handleMessage = async (req, res) => {
                 lastSummarizedIndex: 0
             });
         }
-
-        // Build chat history from existing messages (CPU-only, instant)
         const chatHistory = buildSlidingHistory(conversation.messages);
 
         // Resolve user context from profile
@@ -296,19 +333,104 @@ module.exports.handleMessage = async (req, res) => {
             : 'No historical context gathered yet.';
         const userFullName = userProfile && userProfile.fullName ? userProfile.fullName : 'the user';
 
-        // ── Listing search (only runs now that we have the embedding) ──
-        let matchedListingsDocs = [];
-        let listingsContext = 'No specific listings matched the query.';
+        // ── Step 2: Intent Extraction ──
+        // Runs on every message — LLM decides whether a vector search is needed.
+        const catsJSON = JSON.stringify(CATEGORIES);
+        const intentExtractorPrompt = `You are the "Rentlyst Logic Engine". Extract search parameters into JSON.
 
+**CATEGORY MAPPING RULES:**
+1. **Strict Mapping**: You MUST map user slang to these exact Category/Sub-Category strings from the provided list:
+   - "Heavy Bike", "70cc", "Scooty", "Hayabusa", "Bike" -> mainCategory: "Vehicle", subCategory: "Motorcycles"
+   - "Flat", "Penthouse", "Studio", "1BHK" -> mainCategory: "Property", subCategory: "Apartments & Flats"
+   - "iPhone", "Macbook", "Tab", "Phone", "Laptop" -> mainCategory: "Item", subCategory: "Tech (Mobiles, Tablets, Laptops)"
+   - "Plot", "File", "Commercial Land", "DHA Phase 6 plot" -> mainCategory: "Property", subCategory: "Land & Plots"
+   - "AC Repair", "Wiring", "Electrician" -> mainCategory: "Service", subCategory: "Home Services (Plumber, Electrician, HVAC)"
+
+2. **Multi-Turn Priority**: Prioritize the LATEST message. If the user previously searched for Vehicles but now says "Show me houses," discard the Vehicle filters and switch to Property.
+3. **Sticky Context**: Keep the City, Country, or Budget from earlier in this specific chat history unless the user explicitly changes them.
+
+**DATA STANDARDIZATION:**
+- Fix typos: "Colorla" -> "Corolla", "Civicc" -> "Civic", "Mehraan" -> "Mehran".
+- Locations: Map "LHR" -> "Lahore", "KHI" -> "Karachi", "ISB" -> "Islamabad", "Pindi" -> "Rawalpindi".
+
+**needsSearch RULES:**
+- Set to TRUE only for finding new items or changing search criteria.
+- Set to FALSE for greetings, general chitchat, or follow-up questions about already-displayed listings.
+
+Valid Categories: ${catsJSON}
+
+Output ONLY JSON:
+{
+  "searchQuery": "Standardized keywords for vector search",
+  "filters": {
+    "mainCategory": "Item | Vehicle | Property | Service | null",
+    "subCategory": "Use the EXACT string from Valid Categories list | null",
+    "listingType": "Sale | Rent | null",
+    "city": "Standardized City Name | null",
+    "country": "Standardized Country Name | null",
+    "specifications": { "make": "string | null", "year": "number | null", "bedrooms": "number | null" }
+  },
+  "needsSearch": boolean
+}`;
+
+        let queryAnalysis = { needsSearch: false, searchQuery: message, filters: {} };
         try {
-            if (queryVector) {
-                matchedListingsDocs = await searchListings(queryVector);
-                if (matchedListingsDocs.length > 0) {
-                    listingsContext = matchedListingsDocs.map(l => `[ID: ${l._id}] ${l.searchContext}`).join('\n\n');
+            const analysisMessages = [
+                { role: 'system', content: intentExtractorPrompt },
+                ...chatHistory,
+                { role: 'user', content: message }
+            ];
+            const analysisResult = await callLLMWithFallback(analysisMessages, 2000);
+            let content = analysisResult?.choices?.[0]?.message?.content;
+            // Some reasoning models (Nemotron etc.) return content as an array of blocks
+            if (Array.isArray(content)) {
+                content = content.filter(b => b.type === 'text').map(b => b.text || '').join('');
+            }
+            if (!content) throw new Error('Intent extractor returned null content.');
+            const cleaned = content.trim().replace(/```json/gi, '').replace(/```/g, '').trim();
+            const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error('No JSON found in intent extractor response.');
+            const parsed = JSON.parse(jsonMatch[0]);
+            console.log('[Intent Extractor] needsSearch:', parsed.needsSearch, '| query:', parsed.searchQuery);
+            console.log('[Intent Extractor] filters:', JSON.stringify(parsed.filters));
+            queryAnalysis = {
+                needsSearch: !!parsed.needsSearch,
+                searchQuery: parsed.searchQuery || message,
+                filters: parsed.filters || {}
+            };
+        } catch (analyzerErr) {
+            console.log('[Intent Extractor] Failed. Setting search to false. Reason:', analyzerErr.message);
+            queryAnalysis = { searchQuery: message, filters: {}, needsSearch: false };
+        }
+
+        // ── Step 3: Embed & Search (if needed) ──
+        let matchedListingsDocs = [];
+        let listingsContext = '';
+        let searchWasRelaxed = false;
+
+        if (queryAnalysis.needsSearch) {
+            try {
+                // Embed the clean searchQuery (not the raw message)
+                const queryVector = await generateEmbedding(queryAnalysis.searchQuery, 'query');
+                if (queryVector) {
+                    matchedListingsDocs = await performSearch(queryVector, queryAnalysis.filters);
+                    searchWasRelaxed = matchedListingsDocs.isRelaxed === true;
+                }
+            } catch (searchErr) {
+                console.error('[Search] Vector search failed:', searchErr.message);
+            }
+        } else {
+            // Retrieve previous listings from the conversation state
+            let previousIds = [];
+            for (let i = conversation.messages.length - 1; i >= 0; i--) {
+                if (conversation.messages[i].role === 'agent' && conversation.messages[i].matchedListings?.length > 0) {
+                    previousIds = conversation.messages[i].matchedListings;
+                    break;
                 }
             }
-        } catch (searchErr) {
-            console.error('[Search] Vector search failed, proceeding without listings:', searchErr.message);
+            if (previousIds.length > 0) {
+                matchedListingsDocs = await Listing.find({ _id: { $in: previousIds } });
+            }
         }
 
         const matchedListingIds = matchedListingsDocs.map(l => l._id);
@@ -322,17 +444,52 @@ module.exports.handleMessage = async (req, res) => {
             image: l.image && l.image.length > 0 ? l.image[0].url : ''
         }));
 
-        const dynamicSystemPrompt = `${SYSTEM_PROMPT}
+        if (queryAnalysis.needsSearch) {
+            if (matchedListingsDocs.length > 0) {
+                listingsContext = "CURRENT INVENTORY MATCHES:\n" + matchedListingsDocs.map((l, index) =>
+                    `[#${index + 1}] Title: ${l.title} | Price: ${l.price} | Context: ${l.searchContext}`
+                ).join('\n\n');
+            } else {
+                listingsContext = "STATUS: Out of stock for this specific request.";
+            }
+        } else {
+            if (matchedListingsDocs.length > 0) {
+                listingsContext = "PREVIOUS INVENTORY MATCHES (Do not pitch unless relevant):\n" + matchedListingsDocs.map((l, index) =>
+                    `[#${index + 1}] Title: ${l.title} | Price: ${l.price} | Context: ${l.searchContext}`
+                ).join('\n\n');
+            } else {
+                listingsContext = "STATUS: No search requested. User is just engaging in conversation.";
+            }
+        }
 
-You are talking to ${userFullName}.
-User profile:
-${userContextInfo}
+        // ── Step 4: Final AI Response Generation (Smart Advisor) ──
+        const dynamicSystemPrompt = `You are "Rentlyst Executive Lead" — a high-performing, bold, and expert marketplace manager. You move fast, speak with authority, and have the sharp wit of a professional closer.
 
-Relevant Database Listings (Use these to recommend to the user):
-${listingsContext}
+**USER DOSSIER:**
+Client Name: ${userFullName}
+Intelligence/Preferences: ${userContextInfo}
 
-If the user asks for a recommendation, refer to these listings. Mention details like price, city, or condition.`;
+**CURRENT MARKET DATA:**
+Query: "${queryAnalysis.searchQuery}"
+Inventory Status: ${searchWasRelaxed ? "Relaxed Match (Inventory filtered to best available)" : "Exact Match Found"}
 
+LISTINGS:
+${listingsContext || "NO CURRENT STOCK AVAILABLE"}
+
+**THE PROFESSIONAL SELLER'S RULES:**
+1. **Inventory Integrity**: Talk ONLY about the listings provided. If it's not in the stock list, it doesn't exist on our floor. Do not hallucinate outside options.
+2. **Handle Scarcity**: If results are zero, don't apologize. Be a manager: "I’ve scanned our current inventory and we’re clear on that specific request. However, based on your history, I’ve got something else you need to see."
+3. **The "Pitch" Style**: Be bold. Don't say "I think you might like." Say "This is the one for you." Use the "Secret Notes" to prove you’re the expert (e.g., "I know you've been tracking market prices, so you'll recognize this is a move-fast deal").
+4. **Internet Protocol**: If a user asks for general market data or outside info, stay professional: "That's outside our current stock, but as your manager, I can pull global data if you want the full picture. Give me the word."
+5. **Tone Discipline**: Maintain a high-status, efficient, and decisive tone. Never sound like a customer service bot. You are the partner, not the servant.
+
+**RESPONSE STRUCTURE (Concise & Bold):**
+- **NO HEADINGS. NO BULLET POINTS (except for listing the items).**
+- Start with a strong opening line reflecting your personality.
+- For listings: Use the format "#N | Name | Price | Market Verdict (Expert opinion on the value)."
+- Deep dive only if they ask for details. Give a "Steal" or "Fair Value" rating.
+- Use past history to build trust: "Last time we spoke, you mentioned [Detail]. This [Listing] addresses that perfectly."
+- **Closing**: Always end with a directive (e.g., "Should I lock this in?" or "Which one are we viewing first?"). Avoid corporate filler.`;
         const messages = [
             { role: 'system', content: dynamicSystemPrompt },
             ...chatHistory,
@@ -342,9 +499,12 @@ If the user asks for a recommendation, refer to these listings. Mention details 
         // ── STREAMING RESPONSE via SSE ──
         // Open a streaming connection to the LLM and pipe tokens to the browser
         // as they arrive. This gives a near-instant perceived response time.
-        const { stream } = await callLLMStreamWithFallback(messages, 300);
+        const { stream } = await callLLMStreamWithFallback(messages, 2000);
+        // Pre-save new conversations before streaming so the meta event _id is
+        // immediately loadable from history (no race condition).
+        if (conversation.isNew) await conversation.save();
 
-        // Set SSE headers — tells browser this is an event stream, not a regular response
+        // Set SSE headers
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
@@ -362,7 +522,16 @@ If the user asks for a recommendation, refer to these listings. Mention details 
         // Stream tokens as they arrive from the LLM
         let fullResponse = '';
         for await (const chunk of stream) {
-            const delta = chunk.choices[0]?.delta?.content || '';
+            const rawDelta = chunk.choices[0]?.delta;
+            let delta = '';
+            if (typeof rawDelta?.content === 'string') {
+                // Standard models: content is a plain string
+                delta = rawDelta.content;
+            } else if (Array.isArray(rawDelta?.content)) {
+                // Claude thinking models: content is an array — extract text blocks only
+                delta = rawDelta.content.filter(b => b.type === 'text').map(b => b.text || '').join('');
+            }
+            // Ignore thinking/reasoning chunks — they have no visible content
             if (delta) {
                 fullResponse += delta;
                 res.write(`data: ${JSON.stringify({ type: 'token', content: delta })}\n\n`);
@@ -373,11 +542,18 @@ If the user asks for a recommendation, refer to these listings. Mention details 
         res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
         res.end();
 
-        // Save to DB after stream completes (non-blocking from user perspective)
+        // Log the full response to terminal for debugging
+        console.log(`[Agent Response] Length: ${fullResponse.length} chars`);
+        console.log(`[Agent Response] Preview: ${fullResponse.substring(0, 300)}${fullResponse.length > 300 ? '...' : ''}`);
+
+        // Save to DB after stream completes.
         if (fullResponse.trim()) {
             conversation.messages.push({ role: 'user', content: message, matchedListings: [] });
             conversation.messages.push({ role: 'agent', content: fullResponse, matchedListings: matchedListingIds });
             await conversation.save();
+            console.log(`[Agent DB] Saved conversation ${conversation._id} (${conversation.messages.length} messages total)`);
+        } else {
+            console.log('[Agent DB] fullResponse was empty — skipping save.');
         }
 
     } catch (err) {
@@ -395,7 +571,7 @@ If the user asks for a recommendation, refer to these listings. Mention details 
         try {
             res.write(`data: ${JSON.stringify({ type: 'error', message: 'Stream interrupted. Please try again.' })}\n\n`);
             res.end();
-        } catch (_) {}
+        } catch (_) { }
     }
 };
 

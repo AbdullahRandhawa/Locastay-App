@@ -47,15 +47,11 @@ function buildSearchContext(listing) {
         if (specs.brand) parts.push(`Brand: ${specs.brand}`);
         if (specs.experience) parts.push(`Experience: ${specs.experience}`);
         if (specs.serviceLocation) parts.push(`Service Location: ${specs.serviceLocation}`);
-        if (specs.portfolioLink) parts.push(`Portfolio: ${specs.portfolioLink}`);
     }
 
-    // Description (last, truncated)
+    // Description (last)
     if (listing.description) {
-        const desc = listing.description.length > 500
-            ? listing.description.substring(0, 500) + '...'
-            : listing.description;
-        parts.push(`Description: ${desc}`);
+        parts.push(`Description: ${listing.description}`);
     }
 
     if (listing.reviewSummary) {

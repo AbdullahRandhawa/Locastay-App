@@ -9,7 +9,6 @@
     const chatMessages = document.getElementById('chatMessages');
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
-    const welcomeScreen = document.getElementById('welcomeScreen');
     const historyList = document.getElementById('historyList');
     const listingsPanel = document.getElementById('listingsPanel');
     const listingsEmpty = document.getElementById('listingsEmpty');
@@ -142,36 +141,29 @@
         const message = chatInput.value.trim();
         if (!message) return;
 
-        // Hide welcome screen
-        if (welcomeScreen) welcomeScreen.style.display = 'none';
+        // Remove welcome screen if it exists
+        const ws = document.getElementById('welcomeScreen');
+        if (ws) ws.remove();
 
-        // Show user message immediately
         appendMessage('user', message);
 
-        // Clear input
         chatInput.value = '';
         chatInput.style.height = 'auto';
         const counter = document.getElementById('charCounter');
         if (counter) counter.textContent = '';
+
         sendBtn.disabled = true;
         isLoading = true;
 
-        // Show typing indicator while waiting for first token
         const typing = showTyping();
-
-        let agentBubble = null; // The live streaming bubble
+        let agentBubble = null;
 
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000);
-
             const res = await fetch('/agent/message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, conversationId: currentConversationId }),
-                signal: controller.signal
+                body: JSON.stringify({ message, conversationId: currentConversationId })
             });
-            clearTimeout(timeoutId);
 
             // Handle non-streaming error responses (401, 503, 500 etc.)
             if (!res.ok || res.headers.get('Content-Type')?.includes('application/json')) {
@@ -182,7 +174,6 @@
                 } else {
                     appendMessage('agent', errData.error || 'Sorry, I encountered an error. Please try again.');
                 }
-                isLoading = false;
                 return;
             }
 
@@ -223,7 +214,11 @@
 
                     } else if (event.type === 'done') {
                         if (agentBubble) {
+                            agentBubble.classList.remove('streaming');
                             agentBubble.innerHTML = parseMarkdown(rawText);
+                        } else {
+                            typing.remove();
+                            if (rawText.trim()) appendMessage('agent', rawText);
                         }
                         scrollToBottom();
 
@@ -238,17 +233,22 @@
                 }
             }
 
+            // Safety net: if 'done' event never fired
+            if (!agentBubble && rawText.trim()) {
+                typing.remove();
+                appendMessage('agent', rawText);
+            } else if (agentBubble) {
+                agentBubble.classList.remove('streaming');
+            }
+
         } catch (err) {
             if (!agentBubble) typing.remove();
-            if (err.name === 'AbortError') {
-                appendMessage('agent', 'The request timed out. The AI may be busy — please try again in a moment.');
-            } else {
-                appendMessage('agent', 'Sorry, I encountered an error. Please try again.');
-            }
+            appendMessage('agent', 'Sorry, I encountered an error. Please try again.');
             console.error('Agent stream error:', err);
         }
 
         isLoading = false;
+        sendBtn.disabled = !chatInput.value.trim();
     }
 
 
@@ -346,8 +346,13 @@
     }
 
     // --- Listings Sidebar ---
+    // Simple HTML escape to prevent XSS when injecting listing data into innerHTML
+    function escHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     function updateListingsSidebar(listings) {
-        console.log('[Sidebar] updateListingsSidebar called with', listings ? listings.length : 0, 'listings', listings);
 
         if (!listings || listings.length === 0) {
             matchCount.textContent = '0 found';
@@ -375,16 +380,16 @@
                 : price.toLocaleString();
 
             return `
-                <a href="/explore/${l._id}" class="sidebar-listing-card" target="_blank">
+                <a href="/explore/${escHtml(String(l._id))}" class="sidebar-listing-card" target="_blank">
                     <div class="listing-card-inner">
-                        <img class="listing-card-img" src="${imgSrc}" alt="${l.title || ''}" loading="lazy"
+                        <img class="listing-card-img" src="${escHtml(imgSrc)}" alt="${escHtml(l.title)}" loading="lazy"
                              onerror="this.src='https://images.pexels.com/photos/13305201/pexels-photo-13305201.jpeg'"/>
                         <div class="listing-card-info">
-                            <div class="listing-card-title">${l.title || 'Untitled'}</div>
+                            <div class="listing-card-title">${escHtml(l.title) || 'Untitled'}</div>
                             <div class="listing-card-meta">
-                                <i class="fa-solid fa-location-dot"></i> ${l.city || 'N/A'} ${badge}
+                                <i class="fa-solid fa-location-dot"></i> ${escHtml(l.city) || 'N/A'} ${badge}
                             </div>
-                            <div class="listing-card-price">Rs. ${priceText}</div>
+                            <div class="listing-card-price">Rs. ${escHtml(priceText)}</div>
                         </div>
                     </div>
                 </a>
@@ -447,7 +452,6 @@
 
             // Clear chat
             chatMessages.innerHTML = '';
-            if (welcomeScreen) welcomeScreen.style.display = 'none';
 
             // Render messages
             conv.messages.forEach(msg => appendMessage(msg.role, msg.content));

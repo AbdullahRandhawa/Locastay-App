@@ -18,8 +18,8 @@
     }
 
     /* Hide flash-injected empty elements */
-    .container.flex-grow-1 > br,
-    .container.flex-grow-1 > .row {
+    .container.flex-grow-1>br,
+    .container.flex-grow-1>.row {
       display: none !important;
     }
 
@@ -37,17 +37,13 @@
     }
   </style>
 
-  <iframe
-    id="msgIframe"
-    class="messenger-iframe" 
-    title="Rentlyst Messenger" 
-    allow="microphone; camera"></iframe>
+  <iframe id="msgIframe" class="messenger-iframe" title="Rentlyst Messenger" allow="microphone; camera"></iframe>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const iframe = document.getElementById('msgIframe');
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      
+
       // Construct the base URL provided by EJS, attaching the client-detected theme variable
       const themeParam = isDark ? 'dark' : 'light';
       iframe.src = "https://nocapchat.onrender.com/?fbToken=<%= fbToken %><%= receiverId ? '&receiverId=' + receiverId : '' %>&theme=" + themeParam;

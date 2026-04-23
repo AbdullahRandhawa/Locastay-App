@@ -21,16 +21,16 @@ const summarizeCooldown = new Map(); // userId -> last run timestamp (ms)
 const SUMMARIZE_COOLDOWN_MS = 30 * 1000; // 30 seconds
 
 /**
- * Summarize unsummarized messages across ALL conversations for this user.
- * Only processes conversations that have 5+ new (unsummarized) messages.
- * Skips if called again within SUMMARIZE_COOLDOWN_MS for the same user.
+ * Summarize unsummarized messages and perform a "Smart Merge" into the Manager's Dossier.
  */
 async function summarizeUnsummarizedChats(userId) {
     const userKey = userId.toString();
     const now = Date.now();
     const lastRun = summarizeCooldown.get(userKey) || 0;
-    if (now - lastRun < SUMMARIZE_COOLDOWN_MS) return; // still in cooldown
+
+    if (now - lastRun < SUMMARIZE_COOLDOWN_MS) return;
     summarizeCooldown.set(userKey, now);
+
     try {
         const conversations = await Conversation.find({
             user: userId,
@@ -47,53 +47,68 @@ async function summarizeUnsummarizedChats(userId) {
             const lastIdx = conv.lastSummarizedIndex || 0;
             const newMsgCount = totalMsgs - lastIdx;
 
+            // Only process if there are at least 3 new messages
             if (newMsgCount < 3) continue;
 
             const newMessages = conv.messages.slice(lastIdx);
             const chatText = newMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
 
-            const summaryPrompt = `Analyze the chat to update the "Manager's Dossier" for this client.
+            // STEP 1: Extract fresh insights from the current conversation
+            const summaryPrompt = `Analyze the chat to update the "Manager's Dossier" for this client. 
 Focus ONLY on:
-- Buying/Renting Triggers: (What makes them say yes? Low price? Aesthetic? Location?)
-- Hard Objections: (What have they explicitly rejected? "Too far from city", "Too expensive".)
-- Personality Vibe: (Are they decisive, or do they need a push? Are they looking for luxury or a bargain?)
+- Active Focus & Pivots: (What are they looking for RIGHT NOW? Did they switch from Cars to Items?)
+- Buying/Renting Triggers: (Low price? Performance? Prestige? Reliability?)
+- Hard Objections: (Specific things they rejected: "No Karachi listings", "Too expensive".)
+- Identity & Facts: (Any mention of Name, School, Job, or Age.)
 
 Rules:
-1. Write this as a short, punchy briefing for a replacement manager.
-2. If the user changed their mind (e.g. from Cars to Houses), note the pivot.
-3. If no new psychological insights are found, reply: "NO_NEW_INFO"
+1. Write this as a short, punchy briefing.
+2. If no new psychological or strategic insights are found, reply: "NO_NEW_INFO"
 
 Messages:
 ${chatText}`;
 
-            const result = await callLLMWithFallback([{ role: 'user', content: summaryPrompt }], 300);
-            const summary = (result?.choices?.[0]?.message?.content || '').trim();
+            const result = await callLLMWithFallback([{ role: 'user', content: summaryPrompt }], 400);
+            const newInsights = (result?.choices?.[0]?.message?.content || '').trim();
 
-            if (summary && !summary.includes('NO_NEW_INFO') && summary.length > 5) {
-                if (!profile.agentContext || profile.agentContext === 'No specific context gathered yet.') {
-                    profile.agentContext = summary;
-                } else {
-                    profile.agentContext += '\n' + summary;
-                }
+            if (newInsights && !newInsights.includes('NO_NEW_INFO') && newInsights.length > 5) {
 
-                // Consolidate if too long
-                if (profile.agentContext.length > 2000) {
-                    const consolidatePrompt = `Merge this user profile into a clean labeled list. Remove duplicates, keep all unique facts. Use format "Label: value" per line.\n\n${profile.agentContext}`;
-                    const cResult = await callLLMWithFallback([{ role: 'user', content: consolidatePrompt }], 400);
-                    const consolidated = (cResult?.choices?.[0]?.message?.content || '').trim();
-                    if (consolidated && consolidated.length > 5) {
-                        profile.agentContext = consolidated;
-                    }
+                // STEP 2: The "Smart Merge" - Refine the existing Dossier with new info
+                const mergePrompt = `
+You are a Senior Data Manager. Your task is to update the current "Manager's Dossier" with new insights.
+
+CURRENT DOSSIER:
+${profile.agentContext || "No context gathered yet."}
+
+NEW INSIGHTS:
+${newInsights}
+
+STRICT INSTRUCTIONS:
+1. Integrate new insights into the dossier.
+2. DELETE/FLUSH outdated information (e.g., if the user moved from Cars to Houses, remove the specific car models they were looking at).
+3. PROTECT Identity facts (Name, University, Profession).
+4. Keep the output clean, organized by labels (Triggers, Objections, Vibe), and under 1000 characters.
+5. Output the UPDATED DOSSIER only.`;
+
+                const mergeResult = await callLLMWithFallback([{ role: 'user', content: mergePrompt }], 600);
+                const updatedDossier = (mergeResult?.choices?.[0]?.message?.content || '').trim();
+
+                if (updatedDossier && updatedDossier.length > 5) {
+                    // This replaces the old messy text with the clean, pruned version
+                    profile.agentContext = updatedDossier;
                 }
             }
 
+            // Mark these messages as processed
             conv.lastSummarizedIndex = totalMsgs;
             await conv.save();
         }
 
+        // Save the cleaned-up profile context
         await profile.save();
+
     } catch (err) {
-        console.error('Error summarizing conversations:', err.message || err);
+        console.error('Error during smart summarization:', err.message || err);
     }
 }
 
@@ -138,16 +153,19 @@ function buildSlidingHistory(messages) {
 async function performSearch(queryVector, filters = {}) {
     const buildAtlasFilter = (includeSpecs) => {
         const andClauses = [];
-        if (filters.mainCategory) andClauses.push({ mainCategory: { $eq: filters.mainCategory } });
-        if (filters.subCategory) andClauses.push({ subCategory: { $eq: filters.subCategory } });
-        if (filters.city) andClauses.push({ city: { $eq: filters.city } });
-        if (filters.listingType) andClauses.push({ listingType: { $eq: filters.listingType } });
+
+        if (filters.mainCategory && filters.mainCategory !== null) andClauses.push({ mainCategory: { $eq: filters.mainCategory } });
+        if (filters.subCategory && filters.subCategory !== null) andClauses.push({ subCategory: { $eq: filters.subCategory } });
+        if (filters.city && filters.city !== null) andClauses.push({ city: { $eq: filters.city } });
+        if (filters.listingType && filters.listingType !== null) andClauses.push({ listingType: { $eq: filters.listingType } });
+
         if (includeSpecs && filters.specifications) {
             const specs = filters.specifications;
-            if (specs.make) andClauses.push({ 'specifications.make': { $eq: specs.make } });
-            if (specs.year) andClauses.push({ 'specifications.year': { $eq: specs.year } });
-            if (specs.bedrooms) andClauses.push({ 'specifications.bedrooms': { $eq: specs.bedrooms } });
+            if (specs.make && specs.make !== null) andClauses.push({ 'specifications.make': { $eq: specs.make } });
+            if (specs.year && specs.year !== null) andClauses.push({ 'specifications.year': { $eq: specs.year } });
+            if (specs.bedrooms && specs.bedrooms !== null) andClauses.push({ 'specifications.bedrooms': { $eq: specs.bedrooms } });
         }
+
         return andClauses.length > 0 ? { $and: andClauses } : undefined;
     };
 
@@ -165,8 +183,16 @@ async function performSearch(queryVector, filters = {}) {
             },
             {
                 $project: {
-                    title: 1, city: 1, listingType: 1, price: 1,
-                    rentalPeriod: 1, image: 1, searchContext: 1, mainCategory: 1,
+                    title: 1,
+                    city: 1,
+                    listingType: 1,
+                    price: 1,
+                    rentalPeriod: 1,
+                    image: 1,
+                    searchContext: 1,
+                    mainCategory: 1,
+                    subCategory: 1,
+                    specifications: 1,
                     score: { $meta: 'vectorSearchScore' }
                 }
             }
@@ -273,19 +299,29 @@ async function callLLMStreamWithFallback(messages, max_tokens) {
 
 // 1. RENDER AGENT PAGE
 module.exports.renderAgent = async (req, res) => {
-    const conversations = await Conversation.find({ user: req.user._id })
-        .sort({ updatedAt: -1 })
-        .select('title updatedAt')
-        .lean();
+    try {
+        const conversations = await Conversation.find({ user: req.user._id })
+            .sort({ updatedAt: -1 })
+            .select('title updatedAt')
+            .lean();
 
-    const profile = await Profile.findOne({ user: req.user._id }).lean();
-    const profileImg = profile && profile.profileImg && profile.profileImg.url
-        ? profile.profileImg.url
-        : 'https://images.pexels.com/photos/13305201/pexels-photo-13305201.jpeg';
+        const profile = await Profile.findOne({ user: req.user._id }).lean();
+        const profileImg = profile && profile.profileImg && profile.profileImg.url
+            ? profile.profileImg.url
+            : 'https://images.pexels.com/photos/13305201/pexels-photo-13305201.jpeg';
 
-    res.render('agent/agent.ejs', { conversations, profileImg });
+        // TRIGGER ON LOAD: This cleans up the Dossier the moment you open the app.
+        // It processes any messages sent right before you last closed the browser.
+        summarizeUnsummarizedChats(req.user._id).catch(e =>
+            console.error("[Summarizer Initial Load Error]:", e.message || e)
+        );
+
+        res.render('agent/agent.ejs', { conversations, profileImg });
+    } catch (err) {
+        console.error('Error rendering agent page:', err);
+        res.status(500).send('Internal Server Error');
+    }
 };
-
 // 2. HANDLE MESSAGE (Streaming SSE)
 module.exports.handleMessage = async (req, res) => {
     try {
@@ -331,12 +367,19 @@ module.exports.handleMessage = async (req, res) => {
         const userContextInfo = userProfile && userProfile.agentContext
             ? userProfile.agentContext
             : 'No historical context gathered yet.';
-        const userFullName = userProfile && userProfile.fullName ? userProfile.fullName : 'the user';
+        const userDisplayName = userProfile && userProfile.fullName
+            ? userProfile.fullName
+            : (userProfile && userProfile.username ? userProfile.username : 'the user');
 
         // ── Step 2: Intent Extraction ──
         // Runs on every message — LLM decides whether a vector search is needed.
         const catsJSON = JSON.stringify(CATEGORIES);
         const intentExtractorPrompt = `You are the "Rentlyst Logic Engine". Extract search parameters into JSON.
+
+**SEARCH STRATEGY:**
+1. **The Data Packer Rule**: Your 'searchQuery' is used for Vector Search. Since our listings are embedded with full details, you MUST generate a descriptive 'searchQuery' that includes every piece of info you extracted (e.g., name of the item, main category, listing type, sub category,city, country make, model, year, color, location, price, category, sub-category) whatevr info is available to add.
+2. **Minimal Filter Rule**: If even one piece of information is found (e.g., just a city or just a category), you MUST generate the JSON. Do not wait for a "complete" request.
+3. **Null Handling**: Set any missing fields to null. Never hallucinate data.
 
 **CATEGORY MAPPING RULES:**
 1. **Strict Mapping**: You MUST map user slang to these exact Category/Sub-Category strings from the provided list:
@@ -354,14 +397,14 @@ module.exports.handleMessage = async (req, res) => {
 - Locations: Map "LHR" -> "Lahore", "KHI" -> "Karachi", "ISB" -> "Islamabad", "Pindi" -> "Rawalpindi".
 
 **needsSearch RULES:**
-- Set to TRUE only for finding new items or changing search criteria.
-- Set to FALSE for greetings, general chitchat, or follow-up questions about already-displayed listings.
+- Set to TRUE only for finding new items or changing search or if the user mentions ANY searchable item, category, or location.
+- Set to FALSE for greetings, general chitchat, or follow-up questions about already-displayed listings or non-search statements.
 
 Valid Categories: ${catsJSON}
 
 Output ONLY JSON:
 {
-  "searchQuery": "Standardized keywords for vector search",
+  "searchQuery": "A rich, descriptive sentence combining all extracted filters and keywords for high-accuracy vector matching",
   "filters": {
     "mainCategory": "Item | Vehicle | Property | Service | null",
     "subCategory": "Use the EXACT string from Valid Categories list | null",
@@ -463,11 +506,11 @@ Output ONLY JSON:
         }
 
         // ── Step 4: Final AI Response Generation (Smart Advisor) ──
-        const dynamicSystemPrompt = `You are "Rentlyst Executive Lead" — a high-performing, bold, and expert marketplace manager. You move fast, speak with authority, and have the sharp wit of a professional closer.
+        const dynamicSystemPrompt = `You are "Rentlyst Executive Lead" — a high-performing, bold, and expert marketplace manager. You move fast, speak with authority, and act as a professional closer for our clients.
 
 **USER DOSSIER:**
-Client Name: ${userFullName}
-Intelligence/Preferences: ${userContextInfo}
+User Name: ${userDisplayName || "Valued Client"}
+Identity/Preferences: ${userContextInfo}
 
 **CURRENT MARKET DATA:**
 Query: "${queryAnalysis.searchQuery}"
@@ -477,19 +520,19 @@ LISTINGS:
 ${listingsContext || "NO CURRENT STOCK AVAILABLE"}
 
 **THE PROFESSIONAL SELLER'S RULES:**
-1. **Inventory Integrity**: Talk ONLY about the listings provided. If it's not in the stock list, it doesn't exist on our floor. Do not hallucinate outside options.
-2. **Handle Scarcity**: If results are zero, don't apologize. Be a manager: "I’ve scanned our current inventory and we’re clear on that specific request. However, based on your history, I’ve got something else you need to see."
-3. **The "Pitch" Style**: Be bold. Don't say "I think you might like." Say "This is the one for you." Use the "Secret Notes" to prove you’re the expert (e.g., "I know you've been tracking market prices, so you'll recognize this is a move-fast deal").
-4. **Internet Protocol**: If a user asks for general market data or outside info, stay professional: "That's outside our current stock, but as your manager, I can pull global data if you want the full picture. Give me the word."
-5. **Tone Discipline**: Maintain a high-status, efficient, and decisive tone. Never sound like a customer service bot. You are the partner, not the servant.
+1. **Inventory Integrity**: Discuss ONLY the listings provided or engage in professional dialogue. If an item is not in the stock list, it does not exist on our floor. Do not hallucinate outside inventory.
+2. **Handle Scarcity**:If the LISTINGS block is empty or says 'NO CURRENT STOCK,' you MUST NOT invent, imagine, or suggest any specific items, prices, or names. Instead, ask the user for more details to start a proper search."
+3. **The "Pitch" Style**: Be decisive and confident. Use phrases like "This is the ideal match for you" or "Based on market trends, this is a move-fast deal." Prove your expertise by linking listings to the client's known standards.
+4. **Information Protocol**: If the user asks for personal details (like their name or background), check the User Dossier and answer accurately and professionally. If they ask for outside data, offer to pull it for them but stay focused on the partnership.
+5. **Tone Discipline**: Maintain a high-status, efficient, and professional tone. You are an expert partner, not a service bot. 
+6. **Adaptive Communication**: Be personable. If the user asks for a joke or a specific non-business answer, provide it appropriately, but always bridge the conversation back to your role as their executive manager.
 
-**RESPONSE STRUCTURE (Concise & Bold):**
+**RESPONSE STRUCTURE (Concise & Professional):**
 - **NO HEADINGS. NO BULLET POINTS (except for listing the items).**
-- Start with a strong opening line reflecting your personality.
-- For listings: Use the format "#N | Name | Price | Market Verdict (Expert opinion on the value)."
-- Deep dive only if they ask for details. Give a "Steal" or "Fair Value" rating.
-- Use past history to build trust: "Last time we spoke, you mentioned [Detail]. This [Listing] addresses that perfectly."
-- **Closing**: Always end with a directive (e.g., "Should I lock this in?" or "Which one are we viewing first?"). Avoid corporate filler.`;
+- For listings: Use the format "#N | Name | Price | Market Verdict (Expert opinion on the value)." 
+- List items in the EXACT sequential order provided in the data.
+- Use past history to build trust: "Previously, we discussed [Detail]. This [Listing] addresses that requirement perfectly."
+- **Closing**: End with a directive statement  (e.g., "Should I lock this in?" or "Which one are we viewing first? or something betetr a ccording to situation"). Avoid corporate filler.`;
         const messages = [
             { role: 'system', content: dynamicSystemPrompt },
             ...chatHistory,
@@ -551,11 +594,15 @@ ${listingsContext || "NO CURRENT STOCK AVAILABLE"}
             conversation.messages.push({ role: 'user', content: message, matchedListings: [] });
             conversation.messages.push({ role: 'agent', content: fullResponse, matchedListings: matchedListingIds });
             await conversation.save();
-            console.log(`[Agent DB] Saved conversation ${conversation._id} (${conversation.messages.length} messages total)`);
-        } else {
-            console.log('[Agent DB] fullResponse was empty — skipping save.');
-        }
 
+            // Trigger only if the new messages since last summary are 3 or more
+            const unsummarizedCount = conversation.messages.length - (conversation.lastSummarizedIndex || 0);
+            if (unsummarizedCount >= 3) {
+                summarizeUnsummarizedChats(req.user._id).catch(e => console.error("[Summarizer Error]:", e));
+            }
+
+            console.log(`[Agent DB] Saved conversation ${conversation._id}`);
+        }
     } catch (err) {
         console.error('Agent error:', err.message || err);
 
@@ -587,39 +634,48 @@ module.exports.getConversations = async (req, res) => {
 
 // 4. GET SINGLE CONVERSATION (also triggers summarization on chat switch)
 module.exports.getConversation = async (req, res) => {
-    const conversation = await Conversation.findOne({
-        _id: req.params.id,
-        user: req.user._id
-    }).populate({
-        path: 'messages.matchedListings',
-        select: 'title city listingType price rentalPeriod image'
-    }).lean();
+    try {
+        const conversation = await Conversation.findOne({
+            _id: req.params.id,
+            user: req.user._id
+        }).populate({
+            path: 'messages.matchedListings',
+            select: 'title city listingType price rentalPeriod image'
+        }).lean();
 
-    if (!conversation) {
-        return res.status(404).json({ error: 'Conversation not found' });
-    }
-
-    // Trigger summarization in background when switching chats
-    summarizeUnsummarizedChats(req.user._id).catch(e => console.error(e));
-
-    // Map the most recent agent listings to the sidebar payload
-    let matchedListings = [];
-    for (let i = conversation.messages.length - 1; i >= 0; i--) {
-        if (conversation.messages[i].role === 'agent' && conversation.messages[i].matchedListings && conversation.messages[i].matchedListings.length > 0) {
-            matchedListings = conversation.messages[i].matchedListings.map(l => ({
-                _id: l._id,
-                title: l.title,
-                city: l.city,
-                listingType: l.listingType,
-                price: l.price,
-                rentalPeriod: l.rentalPeriod,
-                image: l.image && l.image.length > 0 ? l.image[0].url : ''
-            }));
-            break;
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
         }
-    }
 
-    res.json({ conversation, matchedListings });
+        // TRIGGER ON SWITCH: When you move to this chat, we summarize any 
+        // pending data from other chats to ensure the Dossier is fresh.
+        summarizeUnsummarizedChats(req.user._id).catch(e =>
+            console.error("[Summarizer Background Error]:", e.message || e)
+        );
+
+        // Map the most recent agent listings to the sidebar payload
+        let matchedListings = [];
+        for (let i = conversation.messages.length - 1; i >= 0; i--) {
+            const msg = conversation.messages[i];
+            if (msg.role === 'agent' && msg.matchedListings && msg.matchedListings.length > 0) {
+                matchedListings = msg.matchedListings.map(l => ({
+                    _id: l._id,
+                    title: l.title,
+                    city: l.city,
+                    listingType: l.listingType,
+                    price: l.price,
+                    rentalPeriod: l.rentalPeriod,
+                    image: l.image && l.image.length > 0 ? l.image[0].url : ''
+                }));
+                break;
+            }
+        }
+
+        res.json({ conversation, matchedListings });
+    } catch (err) {
+        console.error('Error fetching conversation:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 };
 
 // 5. DELETE CONVERSATION

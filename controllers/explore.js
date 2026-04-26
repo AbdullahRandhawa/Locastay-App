@@ -7,58 +7,65 @@ const mapToken = process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 
 const { generateEmbedding } = require('../utils/embedding');
+const openai = require('../utils/openai');
 
-// Helper: Build a labeled search context string for LLM + vector embeddings
-function buildSearchContext(listing) {
+const rawModels = process.env.OPENROUTER_FALLBACK_MODELS || "deepseek/deepseek-v4-flash";
+const AI_MODEL = rawModels.split(',')[0].trim();
+
+async function getCleanedDescription(rawText) {
+    if (!rawText || rawText.trim() === '') return '';
+    try {
+        const prompt = `Extract only hard facts, specifications, colors, and condition details from this text. Remove all sales bias, adjectives, and fluff. Be extremely concise. Return only the extracted facts. Text: "${rawText}"`;
+        const completion = await openai.chat.completions.create({
+            model: AI_MODEL,
+            messages: [{ role: 'user', content: prompt }]
+        });
+        return completion.choices[0].message.content.trim();
+    } catch (e) {
+        console.warn('LLM description cleaning failed:', e.message);
+        return rawText;
+    }
+}
+
+// Helper: Build a pure value-only search context string for LLM + vector embeddings
+function buildSearchContext(listing, cleanedDescriptionText) {
     const parts = [];
 
     // Identity
-    if (listing.mainCategory) parts.push(`Main Category: ${listing.mainCategory}`);
-    if (listing.listingType) parts.push(`Listing Type: ${listing.listingType}`);
-    if (listing.subCategory) parts.push(`Sub Category: ${listing.subCategory}`);
-    if (listing.title) parts.push(`Title: ${listing.title}`);
+    if (listing.mainCategory) parts.push(listing.mainCategory);
+    if (listing.listingType) parts.push(listing.listingType);
+    if (listing.subCategory) parts.push(listing.subCategory);
+    if (listing.title) parts.push(listing.title);
 
     // Quality & Price
     if (listing.mainCategory !== 'Service' && listing.conditionGrade != null) {
-        parts.push(`Condition: ${listing.conditionGrade}/10`);
-    }
-    if (listing.price != null) {
-        const period = listing.rentalPeriod;
-        const periodLabel = period && period !== 'N/A' && period !== 'flat'
-            ? ` per ${period}`
-            : period === 'flat' ? ' (flat/quoted price)' : '';
-        parts.push(`Price: ${listing.price}${periodLabel}`);
+        parts.push(`${listing.conditionGrade}/10`);
     }
 
     // Location
-    if (listing.city) parts.push(`City: ${listing.city}`);
-    if (listing.country) parts.push(`Country: ${listing.country}`);
-    if (listing.address) parts.push(`Address: ${listing.address}`);
+    if (listing.city) parts.push(listing.city);
+    if (listing.country) parts.push(listing.country);
 
     // Specifications
     if (listing.specifications) {
         const specs = listing.specifications;
-        if (specs.make) parts.push(`Make: ${specs.make}`);
-        if (specs.model) parts.push(`Model: ${specs.model}`);
-        if (specs.year) parts.push(`Year: ${specs.year}`);
-        if (specs.area) parts.push(`Area: ${specs.area}`);
-        if (specs.bedrooms != null) parts.push(`Bedrooms: ${specs.bedrooms}`);
-        if (specs.bathrooms != null) parts.push(`Bathrooms: ${specs.bathrooms}`);
-        if (specs.brand) parts.push(`Brand: ${specs.brand}`);
-        if (specs.experience) parts.push(`Experience: ${specs.experience}`);
-        if (specs.serviceLocation) parts.push(`Service Location: ${specs.serviceLocation}`);
+        if (specs.make) parts.push(specs.make);
+        if (specs.model) parts.push(specs.model);
+        if (specs.year) parts.push(specs.year);
+        if (specs.area) parts.push(specs.area);
+        if (specs.bedrooms != null) parts.push(`${specs.bedrooms} bed`);
+        if (specs.bathrooms != null) parts.push(`${specs.bathrooms} bath`);
+        if (specs.brand) parts.push(specs.brand);
+        if (specs.experience) parts.push(`${specs.experience} yrs exp`);
+        if (specs.serviceLocation) parts.push(specs.serviceLocation);
     }
 
-    // Description (last)
-    if (listing.description) {
-        parts.push(`Description: ${listing.description}`);
+    // Cleaned Description
+    if (cleanedDescriptionText) {
+        parts.push(cleanedDescriptionText);
     }
 
-    if (listing.reviewSummary) {
-        parts.push(`Guest Review Summary: ${listing.reviewSummary}`);
-    }
-
-    return parts.join(' | ');
+    return parts.join(', ');
 }
 
 // 1. INDEX ROUTE
@@ -110,25 +117,24 @@ module.exports.renderNewForm = (req, res) => {
 // 4. CREATE LISTING (The Heavy Lifter)
 module.exports.createListing = async (req, res) => {
 
-    // Strip conditionGrade for Service listings — it is not applicable
     if (req.body.listing.mainCategory === 'Service') {
         delete req.body.listing.conditionGrade;
     }
 
-    const response = await geocodingClient
-        .forwardGeocode({
-            query: `${req.body.listing.city}, ${req.body.listing.country}`,
-            limit: 1
-        })
-        .send();
+    // --- PARALLEL EXECUTION: Mapbox & LLM De-fluffing ---
+    const geocodePromise = geocodingClient.forwardGeocode({
+        query: `${req.body.listing.city}, ${req.body.listing.country}`,
+        limit: 1
+    }).send();
+
+    const cleanDescPromise = getCleanedDescription(req.body.listing.description);
+
+    // Wait for BOTH to finish concurrently
+    const [response, cleanedDescription] = await Promise.all([geocodePromise, cleanDescPromise]);
 
     const newListing = new Listing(req.body.listing);
     newListing.conditionGrade = newListing.mainCategory === 'Service' ? undefined : newListing.conditionGrade;
 
-
-
-
-    // Handle Images Array from Multer
     newListing.image = [];
     if (req.files && req.files.length > 0) {
         req.files.forEach(file => {
@@ -141,25 +147,30 @@ module.exports.createListing = async (req, res) => {
 
     newListing.owner = req.user._id;
 
-
-
-    // Safety check for Mapbox response
     if (response.body.features.length > 0) {
         newListing.geometry = response.body.features[0].geometry;
     } else {
         newListing.geometry = { type: "Point", coordinates: [0, 0] };
     }
 
+    // Build the string using ONLY values and the AI-cleaned description
+    newListing.searchContext = buildSearchContext(newListing, cleanedDescription);
 
+    console.log("\n====== [CREATE] LISTING DATA ======");
+    console.log("Original Description:", req.body.listing.description);
+    console.log("LLM Cleaned Description:", cleanedDescription);
+    console.log("Final Search Context:", newListing.searchContext);
+    console.log("===================================\n");
 
-
-    newListing.searchContext = buildSearchContext(newListing);
-
-    // Generate and store embedding for semantic search (non-blocking)
     try {
         newListing.listingVector = await generateEmbedding(newListing.searchContext, 'passage');
+        if (newListing.listingVector && newListing.listingVector.length > 0) {
+            console.log(`✅ [SUCCESS] Generated Embedding Vector!`);
+            console.log(`   -> Array Length: ${newListing.listingVector.length} dimensions`);
+            console.log(`   -> Sample Data: [${newListing.listingVector[0].toFixed(4)}, ${newListing.listingVector[1].toFixed(4)}, ${newListing.listingVector[2].toFixed(4)} ...]\n`);
+        }
     } catch (embErr) {
-        console.warn('Embedding generation failed (listing still saved):', embErr.message);
+        console.warn('❌ Embedding generation failed (listing still saved):', embErr.message);
     }
 
     const newly = await newListing.save();
@@ -224,29 +235,29 @@ module.exports.renderEditForm = async (req, res) => {
 module.exports.editListing = async (req, res) => {
     const { id } = req.params;
 
-    // Strip conditionGrade for Service listings — it is not applicable
     if (req.body.listing.mainCategory === 'Service') {
         delete req.body.listing.conditionGrade;
     }
 
-    const response = await geocodingClient
-        .forwardGeocode({
-            query: `${req.body.listing.city}, ${req.body.listing.country}`,
-            limit: 1
-        })
-        .send();
+    // --- PARALLEL EXECUTION: Mapbox & LLM De-fluffing ---
+    const geocodePromise = geocodingClient.forwardGeocode({
+        query: `${req.body.listing.city}, ${req.body.listing.country}`,
+        limit: 1
+    }).send();
+
+    const cleanDescPromise = getCleanedDescription(req.body.listing.description);
+
+    const [response, cleanedDescription] = await Promise.all([geocodePromise, cleanDescPromise]);
 
     let listing = await Listing.findById(id);
 
     // Update all fields from the form
     listing.set({ ...req.body.listing });
 
-    // Ensure conditionGrade is not stored for Service listings
     if (listing.mainCategory === 'Service') {
         listing.conditionGrade = undefined;
     }
 
-    // Update geometry
     if (response.body.features.length > 0) {
         listing.geometry = response.body.features[0].geometry;
     }
@@ -261,13 +272,24 @@ module.exports.editListing = async (req, res) => {
         });
     }
 
-    listing.searchContext = buildSearchContext(listing);
+    // Rebuild context using new values and newly cleaned description
+    listing.searchContext = buildSearchContext(listing, cleanedDescription);
 
-    // Re-generate embedding after edit (non-blocking)
+    console.log("\n====== [EDIT] LISTING DATA ======");
+    console.log("Original Description:", req.body.listing.description);
+    console.log("LLM Cleaned Description:", cleanedDescription);
+    console.log("Final Search Context:", listing.searchContext);
+    console.log("=================================\n");
+
     try {
         listing.listingVector = await generateEmbedding(listing.searchContext, 'passage');
+        if (listing.listingVector && listing.listingVector.length > 0) {
+            console.log(`✅ [SUCCESS] Re-generated Embedding Vector!`);
+            console.log(`   -> Array Length: ${listing.listingVector.length} dimensions`);
+            console.log(`   -> Sample Data: [${listing.listingVector[0].toFixed(4)}, ${listing.listingVector[1].toFixed(4)}, ${listing.listingVector[2].toFixed(4)} ...]\n`);
+        }
     } catch (embErr) {
-        console.warn('Embedding generation failed (listing still saved):', embErr.message);
+        console.warn('❌ Embedding generation failed (listing still saved):', embErr.message);
     }
 
     await listing.save();

@@ -5,7 +5,7 @@ const { generateEmbedding, cosineSimilarity } = require('../utils/embedding');
 const openai = require('../utils/openai');
 const CATEGORIES = require('../utils/categories');
 
-const rawModels = process.env.OPENROUTER_FALLBACK_MODELS || process.env.OPENROUTER_LLM_MODEL || "";
+const rawModels = process.env.OPENROUTER_FALLBACK_MODELS || "";
 const LLM_MODELS = rawModels.split(',').map(m => m.trim()).filter(Boolean);
 
 // Per-user message rate limiter — max 1 message per 2 seconds
@@ -448,7 +448,6 @@ Output ONLY JSON:
 
         // ── Step 3: Embed & Search (if needed) ──
         let matchedListingsDocs = [];
-        let listingsContext = '';
         let searchWasRelaxed = false;
 
         if (queryAnalysis.needsSearch) {
@@ -487,25 +486,26 @@ Output ONLY JSON:
             image: l.image && l.image.length > 0 ? l.image[0].url : ''
         }));
 
-        if (queryAnalysis.needsSearch) {
-            if (matchedListingsDocs.length > 0) {
-                listingsContext = "CURRENT INVENTORY MATCHES:\n" + matchedListingsDocs.map((l, index) =>
-                    `[#${index + 1}] Title: ${l.title} | Price: ${l.price} | Context: ${l.searchContext}`
-                ).join('\n\n');
-            } else {
-                listingsContext = "STATUS: Out of stock for this specific request.";
-            }
-        } else {
-            if (matchedListingsDocs.length > 0) {
-                listingsContext = "PREVIOUS INVENTORY MATCHES (Do not pitch unless relevant):\n" + matchedListingsDocs.map((l, index) =>
-                    `[#${index + 1}] Title: ${l.title} | Price: ${l.price} | Context: ${l.searchContext}`
-                ).join('\n\n');
-            } else {
-                listingsContext = "STATUS: No search requested. User is just engaging in conversation.";
-            }
-        }
-
         // ── Step 4: Final AI Response Generation (Smart Advisor) ──
+        // We send the FULL listing data as a JSON block to the LLM.
+        // This ensures the agent sees Price, Specs, and Reviews, even though
+        // those were excluded from the Vector Embedding to reduce noise.
+        const listingsContext = matchedListingsDocs.length > 0
+            ? JSON.stringify(matchedListingsDocs.map(l => {
+                const obj = (typeof l.toObject === 'function') ? l.toObject() : l;
+                delete obj.listingVector; // Don't waste tokens on the math array
+                return obj;
+            }), null, 2)
+            : "NO CURRENT STOCK AVAILABLE";
+
+        if (matchedListingsDocs.length > 0) {
+            console.log("\n[AGENT DEBUG] Sending JSON Context to LLM. First item sample:");
+            const firstItem = (typeof matchedListingsDocs[0].toObject === 'function') ? matchedListingsDocs[0].toObject() : matchedListingsDocs[0];
+            const debugObj = { ...firstItem };
+            delete debugObj.listingVector;
+            console.log(JSON.stringify(debugObj, null, 2));
+            console.log("-----------------------------------------------\n");
+        }
         const dynamicSystemPrompt = `You are "Rentlyst Executive Lead" — a high-performing, bold, and expert marketplace manager. You move fast, speak with authority, and act as a professional closer for our clients.
 
 **USER DOSSIER:**
@@ -516,13 +516,14 @@ Identity/Preferences: ${userContextInfo}
 Query: "${queryAnalysis.searchQuery}"
 Inventory Status: ${searchWasRelaxed ? "Relaxed Match (Inventory filtered to best available)" : "Exact Match Found"}
 
-LISTINGS:
+LISTINGS (JSON format):
 ${listingsContext || "NO CURRENT STOCK AVAILABLE"}
 
 **THE PROFESSIONAL SELLER'S RULES:**
-1. **Inventory Integrity**: Discuss ONLY the listings provided or engage in professional dialogue. If an item is not in the stock list, it does not exist on our floor. Do not hallucinate outside inventory.
-2. **Handle Scarcity**:If the LISTINGS block is empty or says 'NO CURRENT STOCK,' you MUST NOT invent, imagine, or suggest any specific items, prices, or names. Instead, ask the user for more details to start a proper search."
-3. **The "Pitch" Style**: Be decisive and confident. Use phrases like "This is the ideal match for you" or "Based on market trends, this is a move-fast deal." Prove your expertise by linking listings to the client's known standards.
+1. **JSON Intelligence**: You must parse the provided JSON data to see the full details (Price, Specs, and Review Summaries). Even though the search was performed via vector matching, you have the full raw data in front of you. Use it to be precise.
+2. **Inventory Integrity**: Discuss ONLY the listings provided or engage in professional dialogue. If an item is not in the stock list, it does not exist on our floor. Do not hallucinate outside inventory.
+3. **Handle Scarcity**: If the LISTINGS block is empty or says 'NO CURRENT STOCK,' you MUST NOT invent, imagine, or suggest any specific items, prices, or names. Instead, ask the user for more details to start a proper search.
+4. **The "Pitch" Style**: Be decisive and confident. Use phrases like "This is the ideal match for you" or "Based on market trends, this is a move-fast deal." Prove your expertise by linking listings to the client's known standards.
 4. **Information Protocol**: If the user asks for personal details (like their name or background), check the User Dossier and answer accurately and professionally. If they ask for outside data, offer to pull it for them but stay focused on the partnership.
 5. **Tone Discipline**: Maintain a high-status, efficient, and professional tone. You are an expert partner, not a service bot. 
 6. **Adaptive Communication**: Be personable. If the user asks for a joke or a specific non-business answer, provide it appropriately, but always bridge the conversation back to your role as their executive manager.

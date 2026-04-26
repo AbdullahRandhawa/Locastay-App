@@ -332,4 +332,16 @@
         const m = { 'Vehicle': 'specsVehicle', 'Property': 'specsProperty', 'Item': 'specsItem', 'Service': 'specsService' };
         if (m[cat]) { const el = document.getElementById(m[cat]); el.classList.remove('d-none'); el.querySelectorAll('input, select').forEach(i => i.disabled = false); }
       }
+
+      // Prevent double submission
+      const form = document.querySelector('.needs-validation');
+      form.addEventListener('submit', (e) => {
+        if (form.checkValidity()) {
+          const submitBtn = form.querySelector('button:not([type="button"])');
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...';
+          }
+        }
+      });
     </script>

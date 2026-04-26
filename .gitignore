@@ -2,3 +2,11 @@
 node_modules/
 
 config/firebase-service-account.json
+
+# Benchmarking and AI Test Scripts
+test_agent_pipeline.js
+test_agent_pipeline_advanced.js
+extract_contexts.js
+extracted_listings.txt
+advanced_test_results.csv
+advanced_test_results.md

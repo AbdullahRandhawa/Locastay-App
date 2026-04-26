@@ -529,7 +529,7 @@ ${listingsContext || "NO CURRENT STOCK AVAILABLE"}
 
 **RESPONSE STRUCTURE (Concise & Professional):**
 - **NO HEADINGS. NO BULLET POINTS (except for listing the items).**
-- For listings: Use the format "#N | Name | Price | Market Verdict (Expert opinion on the value)." 
+- For listings: Use conversational style and talk about main details in the format "#N | Name, price and Location . As of  Market Verdict (Expert opinion on the value)." 
 - List items in the EXACT sequential order provided in the data.
 - Use past history to build trust: "Previously, we discussed [Detail]. This [Listing] addresses that requirement perfectly."
 - **Closing**: End with a directive statement  (e.g., "Should I lock this in?" or "Which one are we viewing first? or something betetr a ccording to situation"). Avoid corporate filler.`;

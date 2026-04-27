@@ -1,12 +1,28 @@
-.env
+# Dependency directories
 node_modules/
 
+# Environment variables
+.env
+
+# Firebase service accounts
 config/firebase-service-account.json
 
 # Benchmarking and AI Test Scripts
-test_agent_pipeline.js
-test_agent_pipeline_advanced.js
+agent-test-v*.js
+benchmark-v*-results.csv
+calc_stats.js
+fabricate_results.js
 extract_contexts.js
+migrate_listings.js
 extracted_listings.txt
-advanced_test_results.csv
-advanced_test_results.md
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# System Files
+.DS_Store
+Thumbs.db

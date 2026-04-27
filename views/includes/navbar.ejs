@@ -2,7 +2,7 @@
 <div class="nav-backdrop" id="navBackdrop"></div>
 
 <nav class="navbar sticky-top">
-  <div class="container-fluid px-2 px-lg-4 d-flex align-items-center justify-content-between gap-3">
+  <div class="container-fluid px-2 px-lg-4 d-flex align-items-center justify-content-between gap-2">
 
     <!-- Left Div: Brand -->
     <div class="d-flex align-items-center">
@@ -36,8 +36,11 @@
 
       <!-- Auth Links -->
       <% if(currUser) { %>
-        <a class="nav-link nav-pill" href="/messages"><i class="fa-regular fa-comment-dots fa-lg"></i><span
-            class="d-none d-lg-inline ms-1">Messages</span></a>
+        <a class="nav-link nav-pill" href="/messages" style="position:relative;" id="navMsgBtn">
+          <i class="fa-regular fa-comment-dots fa-lg"></i>
+          <span class="d-none d-lg-inline ms-1">Messages</span>
+          <span id="navUnreadDot" style="display:none;position:absolute;top:2px;right:2px;width:9px;height:9px;background:#e63946;border-radius:50%;border:2px solid var(--bg-white);"></span>
+        </a>
         <a class="nav-link nav-pill" href="/agent"><i class="fa-solid fa-robot fa-lg"></i><span
             class="d-none d-lg-inline ms-1">Ask Rentlyst</span></a>
         <% } %>
@@ -135,7 +138,11 @@
     <a class="drawer-link" href="/explore"><i class="fa-solid fa-compass"></i><span>Explore</span></a>
     <a class="drawer-link" href="/explore/new"><i class="fa-solid fa-plus"></i><span>Add New Listing</span></a>
     <% if(currUser) { %>
-      <a class="drawer-link" href="/messages"><i class="fa-regular fa-comment"></i><span>Messages</span></a>
+      <a class="drawer-link" href="/messages" style="position:relative;" id="drawerMsgBtn">
+        <i class="fa-regular fa-comment"></i>
+        <span>Messages</span>
+        <span id="drawerUnreadDot" style="display:none;position:absolute;top:50%;right:12px;transform:translateY(-50%);width:9px;height:9px;background:#e63946;border-radius:50%;"></span>
+      </a>
       <a class="drawer-link" href="/agent"><i class="fa-solid fa-robot"></i><span>Ask Rentlyst</span></a>
       <div class="drawer-divider"></div>
       <% if(currUser && currUser.role==='admin' ) { %>
@@ -183,3 +190,31 @@
     });
   })();
 </script>
+
+<% if (currUser) { %>
+<script>
+  (function () {
+    const navDot = document.getElementById('navUnreadDot');
+    const drawerDot = document.getElementById('drawerUnreadDot');
+
+    function showDots(visible) {
+      if (navDot) navDot.style.display = visible ? 'block' : 'none';
+      if (drawerDot) drawerDot.style.display = visible ? 'block' : 'none';
+    }
+
+    async function checkUnread() {
+      try {
+        const res = await fetch('/profile/unread-check');
+        const data = await res.json();
+        showDots(data.hasUnread === true);
+      } catch (e) {
+        // Silently fail - don't break the page if this fails
+      }
+    }
+
+    // Check immediately on page load, then every 15 seconds
+    checkUnread();
+    setInterval(checkUnread, 15000);
+  })();
+</script>
+<% } %>

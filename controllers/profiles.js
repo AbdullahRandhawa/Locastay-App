@@ -181,3 +181,27 @@ module.exports.deleteAccount = async (req, res, next) => {
         res.redirect('/profile');
     }
 }
+
+// Check if the current user has any unread messages in their userchats
+module.exports.checkUnreadMessages = async (req, res) => {
+    try {
+        if (!req.user || !req.user.firebaseUid) {
+            return res.json({ hasUnread: false });
+        }
+
+        const userchatsRef = db.collection('userchats').doc(req.user.firebaseUid);
+        const userchatsDoc = await userchatsRef.get();
+
+        if (!userchatsDoc.exists) {
+            return res.json({ hasUnread: false });
+        }
+
+        const chats = userchatsDoc.data().chats || [];
+        const hasUnread = chats.some(c => c.isSeen === false);
+
+        return res.json({ hasUnread });
+    } catch (err) {
+        console.error('[Unread Check Error]:', err.message);
+        return res.json({ hasUnread: false });
+    }
+}

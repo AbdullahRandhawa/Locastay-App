@@ -17,7 +17,7 @@ try {
         serviceAccount = require("./config/firebase-service-account.json");
     }
 } catch (error) {
-    console.error("🔥 Error: Could not load Firebase credentials.");
+    console.error("Error: Could not load Firebase credentials.");
     console.error("Please ensure either FIREBASE_SERVICE_ACCOUNT env var is set,");
     console.error("or a Render Secret File exists at /etc/secrets/firebase-service-account.json,");
     console.error("or ./config/firebase-service-account.json exists locally.");

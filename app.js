@@ -150,10 +150,26 @@ app.use('/admin', adminRouter);
 app.get('/messages', isLoggedIn, async (req, res) => {
     try {
         const { admin } = require('./firebaseAdmin');
-        const receiverId = req.query.receiverId || '';
-        // Use firebaseUid (not Mongo _id) since we are now using Firebase Auth natively
+        const rawReceiverId = req.query.receiverId || '';
+
+        // The show.ejs button passes the MongoDB _id of the owner.
+        // We need to resolve this to the owner's firebaseUid so that
+        // nocap-chat can look them up in Firestore correctly.
+        let receiverFirebaseUid = '';
+        if (rawReceiverId) {
+            console.log("Rentlyst Messages: Received rawReceiverId:", rawReceiverId);
+            const ownerUser = await User.findById(rawReceiverId).lean();
+            console.log("Rentlyst Messages: Found owner user:", ownerUser ? ownerUser.username : "Not Found");
+            if (ownerUser && ownerUser.firebaseUid) {
+                receiverFirebaseUid = ownerUser.firebaseUid;
+                console.log("Rentlyst Messages: Resolved to Firebase UID:", receiverFirebaseUid);
+            } else {
+                console.log("Rentlyst Messages: Owner user lacks firebaseUid!");
+            }
+        }
+
         const firebaseToken = await admin.auth().createCustomToken(req.user.firebaseUid);
-        res.render('messages.ejs', { receiverId, fbToken: firebaseToken, hideFooter: true });
+        res.render('messages.ejs', { receiverId: receiverFirebaseUid, fbToken: firebaseToken, hideFooter: true });
     } catch (err) {
         console.error("Error generating token for messages iframe:", err);
         req.flash('error', 'Could not load messenger.');

@@ -87,7 +87,11 @@
       <a href="/profile/public/<%= idListing.owner ? idListing.owner._id : '' %>" class="host-card-link">
         <div class="listing-detail-card host-card d-flex align-items-center flex-wrap gap-3 mt-4 mb-3">
           <div class="host-avatar host-avatar-lg">
-            <%= idListing.owner ? idListing.owner.username.charAt(0).toUpperCase() : 'U' %>
+            <% if(typeof hostProfile !== 'undefined' && hostProfile && hostProfile.profileImg && hostProfile.profileImg.url) { %>
+              <img src="<%= hostProfile.profileImg.url %>" alt="Host Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+            <% } else { %>
+              <%= idListing.owner ? idListing.owner.username.charAt(0).toUpperCase() : 'U' %>
+            <% } %>
           </div>
           <div>
             <h5 class="mb-0 fw-semibold">
@@ -249,7 +253,11 @@
                 <div class="card p-3 h-100 review-card">
                   <div class="d-flex align-items-center gap-2 mb-2">
                     <div class="review-avatar">
-                      <%= review.author ? review.author.username.charAt(0).toUpperCase() : 'A' %>
+                      <% if(review.author && typeof profileImgMap !== 'undefined' && profileImgMap && profileImgMap[review.author._id.toString()]) { %>
+                        <img src="<%= profileImgMap[review.author._id.toString()] %>" alt="Reviewer Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                      <% } else { %>
+                        <%= review.author ? review.author.username.charAt(0).toUpperCase() : 'A' %>
+                      <% } %>
                     </div>
                     <h6 class="card-title mb-0 fw-semibold">
                       <%= review.author ? review.author.username : 'Anonymous User' %>

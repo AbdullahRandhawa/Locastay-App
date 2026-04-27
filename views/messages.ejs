@@ -46,6 +46,15 @@
 
       // Construct the base URL provided by EJS, attaching the client-detected theme variable
       const themeParam = isDark ? 'dark' : 'light';
-      iframe.src = "https://nocapchat.onrender.com/?fbToken=<%= fbToken %><%= receiverId ? '&receiverId=' + receiverId : '' %>&theme=" + themeParam;
+      const baseUrl = "<%= process.env.NODE_ENV === 'production' ? 'https://nocapchat.onrender.com' : 'http://localhost:5173' %>";
+      const fbToken = "<%= fbToken %>";
+      const receiverId = "<%= receiverId || '' %>";
+      
+      let finalUrl = baseUrl + "/?fbToken=" + fbToken + "&theme=" + themeParam;
+      if (receiverId) {
+          finalUrl += "&receiverId=" + receiverId;
+      }
+      
+      iframe.src = finalUrl;
     });
   </script>

@@ -1,5 +1,6 @@
 const Listing = require('../models/listing.js');
 const User = require('../models/user');
+const Profile = require('../models/profile');
 const CATEGORIES = require('../utils/categories'); // Your master list
 
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
@@ -207,7 +208,25 @@ module.exports.showListing = async (req, res) => {
         req.flash("error", "Listing you requested for does not exist!");
         return res.redirect('/explore');
     }
-    res.render('explore/show.ejs', { idListing });
+
+    // Fetch the host's profile
+    const hostProfile = idListing.owner ? await Profile.findOne({ user: idListing.owner._id }).lean() : null;
+    console.log("Host Profile:", JSON.stringify(hostProfile));
+
+    // Fetch all reviewers' profiles
+    const reviewerIds = idListing.reviews.map(r => r.author ? r.author._id : null).filter(id => id != null);
+    const reviewerProfiles = await Profile.find({ user: { $in: reviewerIds } }).lean();
+    
+    // Create a map of userId -> profileImg url
+    const profileImgMap = {};
+    reviewerProfiles.forEach(p => {
+        if (p.profileImg && p.profileImg.url) {
+            profileImgMap[p.user.toString()] = p.profileImg.url;
+        }
+    });
+    console.log("Profile Img Map:", profileImgMap);
+
+    res.render('explore/show.ejs', { idListing, hostProfile, profileImgMap });
 };
 
 // 6. RENDER EDIT FORM (With your 150px Thumbnail logic)

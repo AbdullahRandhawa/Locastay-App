@@ -29,4 +29,7 @@ router.put('/', isLoggedIn, upload.single('profile[profileImg]'), asyncWrap(prof
 // Delete Account Route
 router.delete('/delete-account', isLoggedIn, asyncWrap(profileController.deleteAccount));
 
+// Unread Messages Check Route (used by navbar badge)
+router.get('/unread-check', isLoggedIn, asyncWrap(profileController.checkUnreadMessages));
+
 module.exports = router;

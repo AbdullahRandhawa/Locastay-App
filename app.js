@@ -147,55 +147,6 @@ app.use('/agent', agentRoute);
 app.use('/profile', profileRouter);
 app.use('/admin', adminRouter);
 
-app.get('/messages', isLoggedIn, async (req, res) => {
-    try {
-        const { admin } = require('./firebaseAdmin');
-        const rawReceiverId = req.query.receiverId || '';
-
-        // The show.ejs button passes the MongoDB _id of the owner.
-        // We need to resolve this to the owner's firebaseUid so that
-        // nocap-chat can look them up in Firestore correctly.
-        let receiverFirebaseUid = '';
-        if (rawReceiverId) {
-            console.log("Rentlyst Messages: Received rawReceiverId:", rawReceiverId);
-            const ownerUser = await User.findById(rawReceiverId).lean();
-            console.log("Rentlyst Messages: Found owner user:", ownerUser ? ownerUser.username : "Not Found");
-            if (ownerUser && ownerUser.firebaseUid) {
-                receiverFirebaseUid = ownerUser.firebaseUid;
-                console.log("Rentlyst Messages: Resolved to Firebase UID:", receiverFirebaseUid);
-            } else {
-                console.log("Rentlyst Messages: Owner user lacks firebaseUid!");
-            }
-        }
-
-        const firebaseToken = await admin.auth().createCustomToken(req.user.firebaseUid);
-        res.render('messages.ejs', { receiverId: receiverFirebaseUid, fbToken: firebaseToken, hideFooter: true });
-    } catch (err) {
-        console.error("Error generating token for messages iframe:", err);
-        req.flash('error', 'Could not load messenger.');
-        res.redirect('/explore');
-    }
-});
-
-// Legal Pages
-app.get('/terms', (req, res) => res.render('legal/terms.ejs'));
-app.get('/privacy', (req, res) => res.render('legal/privacy.ejs'));
-app.get('/sitemap', (req, res) => res.render('legal/sitemap.ejs'));
-app.get('/help', async (req, res) => {
-    try {
-        // Find first admin user so the Help Center can link directly to their chat
-        const adminUser = await User.findOne({ role: 'admin' }).lean();
-        const adminFirebaseUid = adminUser ? adminUser.firebaseUid : null;
-        res.render('legal/help.ejs', { adminFirebaseUid });
-    } catch (err) {
-        console.error('Help page error:', err);
-        res.render('legal/help.ejs', { adminFirebaseUid: null });
-    }
-});
-
-// const listingController = require('./controllers/explore.js'); // removed unused
-// app.get('/', asyncWrap(listingController.renderHome)); // Handled by homeRoute
-
 const multer = require('multer');
 const { storage, cloudinary } = require('./cloudConfig.js');
 const { profile } = require("console");

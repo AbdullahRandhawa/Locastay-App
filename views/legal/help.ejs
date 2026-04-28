@@ -242,32 +242,49 @@
       <p>Have a question, a report, or need help with your account? Send a direct message to the Rentlyst team below.
         We'll get back to you as soon as possible.</p>
 
-      <div class="admin-contact-card">
-        <div class="admin-avatar">R</div>
-        <div class="admin-info">
-          <div class="admin-name">Rentlyst Support</div>
-          <div class="admin-role">Platform Administrator</div>
-        </div>
-        <% if (currUser && adminFirebaseUid) { %>
-          <a href="/messages?receiverId=<%= adminFirebaseUid %>" class="btn-chat-admin">
-            <i class="fa-regular fa-comment-dots"></i> Chat with Support
-          </a>
-          <% } else if (!currUser) { %>
-            <a href="/login" class="btn-chat-admin">
-              <i class="fa-solid fa-right-to-bracket"></i> Log in to Chat
-            </a>
+      <% if (admins && admins.length > 0) { %>
+        <% admins.forEach(function(admin) { %>
+          <div class="admin-contact-card">
+            <!-- Real profile avatar with initial fallback -->
+            <% if (admin.avatar) { %>
+              <img src="<%= admin.avatar %>" alt="Support" class="admin-avatar" style="object-fit:cover; font-size:0;">
             <% } else { %>
-              <span class="btn-chat-admin-outline" style="cursor:default; opacity:0.6;">
-                <i class="fa-solid fa-circle-exclamation"></i> Support unavailable
-              </span>
-              <% } %>
-      </div>
+              <div class="admin-avatar"><%= admin.username.charAt(0).toUpperCase() %></div>
+            <% } %>
+            <div class="admin-info">
+              <div class="admin-name"><%= admin.fullName || 'Rentlyst Support' %></div>
+              <div class="admin-role">Platform Administrator &middot; @<%= admin.username %></div>
+            </div>
+            <% if (currUser) { %>
+              <a href="/messages?receiverId=<%= admin.mongoId %>" class="btn-chat-admin">
+                <i class="fa-regular fa-comment-dots"></i> Chat with Support
+              </a>
+            <% } else { %>
+              <a href="/login" class="btn-chat-admin">
+                <i class="fa-solid fa-right-to-bracket"></i> Log in to Chat
+              </a>
+            <% } %>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="admin-contact-card">
+          <div class="admin-avatar">R</div>
+          <div class="admin-info">
+            <div class="admin-name">Rentlyst Support</div>
+            <div class="admin-role">Platform Administrator</div>
+          </div>
+          <span class="btn-chat-admin-outline" style="cursor:default; opacity:0.6;">
+            <i class="fa-solid fa-circle-exclamation"></i> Support unavailable
+          </span>
+        </div>
+      <% } %>
 
       <p style="font-size:0.85rem; color: var(--text-muted); margin:0;">
         <i class="fa-solid fa-clock me-1"></i>Typical response time: within 24 hours &middot;
         Available Monday to Saturday
       </p>
     </div>
+
 
     <hr class="legal-divider">
 

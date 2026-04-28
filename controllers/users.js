@@ -170,3 +170,26 @@ module.exports.resolveEmail = async (req, res) => {
         return res.status(500).json({ error: 'Server error looking up username.' });
     }
 }
+
+// ─── MESSAGES ─────────────────────────────────────────────────────────────────
+module.exports.renderMessages = async (req, res) => {
+    try {
+        const { admin } = require('../firebaseAdmin');
+        const rawReceiverId = req.query.receiverId || '';
+
+        let receiverFirebaseUid = '';
+        if (rawReceiverId) {
+            const ownerUser = await User.findById(rawReceiverId).lean();
+            if (ownerUser && ownerUser.firebaseUid) {
+                receiverFirebaseUid = ownerUser.firebaseUid;
+            }
+        }
+
+        const firebaseToken = await admin.auth().createCustomToken(req.user.firebaseUid);
+        res.render('messages.ejs', { receiverId: receiverFirebaseUid, fbToken: firebaseToken, hideFooter: true });
+    } catch (err) {
+        console.error("Error generating token for messages iframe:", err);
+        req.flash('error', 'Could not load messenger.');
+        res.redirect('/explore');
+    }
+};

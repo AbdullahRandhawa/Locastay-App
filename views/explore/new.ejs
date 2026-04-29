@@ -231,6 +231,15 @@
               </div>
             </div>
 
+            <!-- Interactive Map -->
+            <div class="mb-5 d-none" id="pinMapContainer">
+              <label class="form-label fw-semibold">Pinpoint Exact Location <span class="text-muted fw-normal">(Optional)</span></label>
+              <p class="text-muted small mb-2">Drag the pin to set your exact location. This helps renters find you easily!</p>
+              <div id="pinMap" style="height: 300px; width: 100%; border-radius: var(--radius-md);" data-token="<%= process.env.MAP_TOKEN %>"></div>
+              <input type="hidden" name="listing[lng]" id="listingLng">
+              <input type="hidden" name="listing[lat]" id="listingLat">
+            </div>
+
             <!-- Description -->
             <div class="mb-5 pb-3">
               <label for="description" class="form-label fw-semibold">Description</label>
@@ -344,4 +353,74 @@
           }
         }
       });
+
+      // Mapbox Interactive Pin Drop
+      const pinMapDiv = document.getElementById('pinMap');
+      const mapToken = pinMapDiv.dataset.token;
+      mapboxgl.accessToken = mapToken;
+      
+      const cityInput = document.getElementById('city');
+      const countryInput = document.getElementById('countryy');
+      const pinMapContainer = document.getElementById('pinMapContainer');
+      const lngInput = document.getElementById('listingLng');
+      const latInput = document.getElementById('listingLat');
+      
+      let pinMap, formMarker;
+      let lastLocation = ""; // To prevent redundant geocoding
+
+      async function showMap() {
+        const city = cityInput.value.trim();
+        const country = countryInput.value.trim();
+        const currentLocation = `${city}, ${country}`;
+        
+        if (city && country) {
+          pinMapContainer.classList.remove('d-none');
+          
+          // Only re-geocode if the address actually changed
+          if (currentLocation === lastLocation) return;
+          lastLocation = currentLocation;
+          
+          try {
+            const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(currentLocation)}.json?access_token=${mapToken}&limit=1`);
+            const data = await res.json();
+            
+            if (data.features && data.features.length > 0) {
+              const coords = data.features[0].center; // [lng, lat]
+              
+              if (!pinMap) {
+                pinMap = new mapboxgl.Map({
+                  container: 'pinMap',
+                  style: 'mapbox://styles/mapbox/satellite-streets-v12',
+                  center: coords,
+                  zoom: 12
+                });
+                pinMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+                
+                formMarker = new mapboxgl.Marker({ color: "red", draggable: true })
+                  .setLngLat(coords)
+                  .addTo(pinMap);
+                  
+                lngInput.value = coords[0];
+                latInput.value = coords[1];
+                
+                formMarker.on('dragend', () => {
+                  const lngLat = formMarker.getLngLat();
+                  lngInput.value = lngLat.lng;
+                  latInput.value = lngLat.lat;
+                });
+              } else {
+                pinMap.flyTo({ center: coords, zoom: 12 });
+                formMarker.setLngLat(coords);
+                lngInput.value = coords[0];
+                latInput.value = coords[1];
+              }
+            }
+          } catch (e) {
+            console.error("Mapbox geocoding error:", e);
+          }
+        }
+      }
+
+      cityInput.addEventListener('blur', showMap);
+      countryInput.addEventListener('blur', showMap);
     </script>

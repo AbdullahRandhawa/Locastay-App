@@ -233,14 +233,25 @@
                     <div class="row mb-4">
                         <div class="col-md-6 mb-3 mb-md-0">
                             <label for="city" class="form-label fw-semibold">City</label>
-                            <input type="text" name="listing[city]" value="<%= listing.city %>"
+                            <input type="text" name="listing[city]" id="city" value="<%= listing.city %>"
                                 class="form-control form-input" required>
                         </div>
                         <div class="col-md-6">
                             <label for="country" class="form-label fw-semibold">Country</label>
-                            <input type="text" name="listing[country]" value="<%= listing.country %>"
+                            <input type="text" name="listing[country]" id="country" value="<%= listing.country %>"
                                 class="form-control form-input" required>
                         </div>
+                    </div>
+
+                    <!-- Interactive Map -->
+                    <div class="mb-4 d-none" id="pinMapContainer">
+                        <label class="form-label fw-semibold">Pinpoint Exact Location <span class="text-muted fw-normal">(Optional)</span></label>
+                        <p class="text-muted small mb-2">Drag the pin to update your exact location.</p>
+                        <div id="pinMap" style="height: 300px; width: 100%; border-radius: var(--radius-md);" 
+                             data-coords="<%= JSON.stringify(listing.geometry ? listing.geometry.coordinates : null) %>"
+                             data-token="<%= process.env.MAP_TOKEN %>"></div>
+                        <input type="hidden" name="listing[lng]" id="listingLng">
+                        <input type="hidden" name="listing[lat]" id="listingLat">
                     </div>
 
                     <!-- Description -->
@@ -277,4 +288,89 @@
                 }
             }
         });
+
+        // Mapbox Interactive Pin Drop
+        const pinMapDiv = document.getElementById('pinMap');
+        const mapToken = pinMapDiv.dataset.token;
+        mapboxgl.accessToken = mapToken;
+        
+        const cityInput = document.getElementById('city');
+        const countryInput = document.getElementById('country');
+        const pinMapContainer = document.getElementById('pinMapContainer');
+        const lngInput = document.getElementById('listingLng');
+        const latInput = document.getElementById('listingLat');
+        
+        let pinMap, formMarker;
+        let lastLocation = `${cityInput.value.trim()}, ${countryInput.value.trim()}`; 
+
+        async function showMap() {
+            const city = cityInput.value.trim();
+            const country = countryInput.value.trim();
+            const currentLocation = `${city}, ${country}`;
+            
+            if (city && country) {
+                pinMapContainer.classList.remove('d-none');
+                
+                try {
+                    // Only re-geocode if address changed
+                    if (pinMap && currentLocation === lastLocation) return;
+                    
+                    const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(currentLocation)}.json?access_token=${mapToken}&limit=1`);
+                    const data = await res.json();
+                    
+                    if (data.features && data.features.length > 0) {
+                        const coords = data.features[0].center; // [lng, lat]
+                        
+                        if (!pinMap) {
+                            pinMap = new mapboxgl.Map({
+                                container: 'pinMap',
+                                style: 'mapbox://styles/mapbox/satellite-streets-v12',
+                                center: coords,
+                                zoom: 12
+                            });
+                            pinMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+                            
+                            // If we already have geometry, use it
+                            const existingCoords = JSON.parse(pinMapDiv.dataset.coords);
+                            const existingLng = existingCoords ? existingCoords[0] : null;
+                            const existingLat = existingCoords ? existingCoords[1] : null;
+                            const startCoords = (existingLng && existingLat) ? [existingLng, existingLat] : coords;
+
+                            pinMap.setCenter(startCoords);
+                            lastLocation = currentLocation; // Set the initial location
+
+                            formMarker = new mapboxgl.Marker({ color: "red", draggable: true })
+                                .setLngLat(startCoords)
+                                .addTo(pinMap);
+                                
+                            lngInput.value = startCoords[0];
+                            latInput.value = startCoords[1];
+                            
+                            formMarker.on('dragend', () => {
+                                const lngLat = formMarker.getLngLat();
+                                lngInput.value = lngLat.lng;
+                                latInput.value = lngLat.lat;
+                            });
+                        } else {
+                            // Only flyTo and move marker if location actually changed
+                            if (currentLocation !== lastLocation) {
+                                pinMap.flyTo({ center: coords, zoom: 12 });
+                                formMarker.setLngLat(coords);
+                                lngInput.value = coords[0];
+                                latInput.value = coords[1];
+                                lastLocation = currentLocation;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Mapbox geocoding error:", e);
+                }
+            }
+        }
+
+        // Show map initially if city/country exist (which they do in edit form)
+        showMap();
+
+        cityInput.addEventListener('blur', showMap);
+        countryInput.addEventListener('blur', showMap);
     </script>

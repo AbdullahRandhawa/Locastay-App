@@ -5,7 +5,7 @@ const profileController = require('../controllers/profiles');
 const { isLoggedIn } = require('../utils/middleware');
 
 const multer = require('multer');
-const { storage } = require('../cloudConfig.js');
+const { storage } = require('../config/cloudConfig.js');
 const upload = multer({ storage });
 
 

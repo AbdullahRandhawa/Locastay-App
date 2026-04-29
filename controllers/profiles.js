@@ -3,7 +3,7 @@ const Profile = require('../models/profile');
 const User = require('../models/user');
 const Conversation = require('../models/conversation');
 const Review = require('../models/review');
-const { cloudinary } = require('../cloudConfig');
+const { cloudinary } = require('../config/cloudConfig');
 const { admin, db } = require('../firebaseAdmin');
 
 module.exports.profile = async (req, res, next) => {

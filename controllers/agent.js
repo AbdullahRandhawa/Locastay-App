@@ -238,14 +238,17 @@ async function performSearch(queryVector, filters = {}) {
     const fallbackQuery = {
         listingVector: { $exists: true, $ne: [] }
     };
-    // Add these to make the fallback smarter
+    // Add these to make the fallback smarter and more precise
     if (filters.mainCategory) fallbackQuery.mainCategory = filters.mainCategory;
+    if (filters.subCategory) fallbackQuery.subCategory = filters.subCategory;
     if (filters.city) fallbackQuery.city = filters.city;
+    if (filters.listingType) fallbackQuery.listingType = filters.listingType;
+    if (filters.country) fallbackQuery.country = filters.country;
 
     const listings = await Listing.find(fallbackQuery).limit(500);
 
     const scored = listings
-        .map(l => ({ ...l.toObject(), score: cosineSimilarity(queryVector, l.listingVector) }))
+        .map(l => ({ ...l.toObject(), score: cosineSimilarity(queryVector, l.listingVector) })) // [AI CALL]: Uses embedding.js (cosineSimilarity) as fallback
         .filter(l => l.score > 0.3)
         .sort((a, b) => b.score - a.score)
         .slice(0, 10);
@@ -261,6 +264,7 @@ async function callLLMWithFallback(messages, max_tokens) {
     let lastErr;
     for (const model of LLM_MODELS) {
         try {
+            // [AI CALL]: Uses openai.js for non-streaming completions (intent extraction, summarization)
             return await openai.chat.completions.create({ model, messages, max_tokens });
         } catch (err) {
             console.warn(`[Fallback Warning] Model ${model} failed, trying next if available...`, err.message);
@@ -278,6 +282,7 @@ async function callLLMStreamWithFallback(messages, max_tokens) {
     let lastErr;
     for (const model of LLM_MODELS) {
         try {
+            // [AI CALL]: Uses openai.js for streaming response (SSE)
             const stream = await openai.chat.completions.create({
                 model,
                 messages,
@@ -374,31 +379,18 @@ module.exports.handleMessage = async (req, res) => {
         // ── Step 2: Intent Extraction ──
         // Runs on every message — LLM decides whether a vector search is needed.
         const catsJSON = JSON.stringify(CATEGORIES);
-        const intentExtractorPrompt = `You are the "Rentlyst Logic Engine". Extract search parameters into JSON.
+        const intentExtractorPrompt = `Extract search parameters into JSON. Never hallucinate; use null for missing fields.
 
-**SEARCH STRATEGY:**
-1. **The Data Packer Rule**: Your 'searchQuery' is used for Vector Search. Since our listings are embedded with full details, you MUST generate a descriptive 'searchQuery' that includes every piece of info you extracted (e.g., name of the item, main category, listing type, sub category,city, country make, model, year, color, location, price, category, sub-category) whatevr info is available to add.
-2. **Minimal Filter Rule**: If even one piece of information is found (e.g., just a city or just a category), you MUST generate the JSON. Do not wait for a "complete" request.
-3. **Null Handling**: Set any missing fields to null. Never hallucinate data.
-
-**CATEGORY MAPPING RULES:**
-1. **Strict Mapping**: You MUST map user slang to these exact Category/Sub-Category strings from the provided list:
-   - "Heavy Bike", "70cc", "Scooty", "Hayabusa", "Bike" -> mainCategory: "Vehicle", subCategory: "Motorcycles"
-   - "Flat", "Penthouse", "Studio", "1BHK" -> mainCategory: "Property", subCategory: "Apartments & Flats"
-   - "iPhone", "Macbook", "Tab", "Phone", "Laptop" -> mainCategory: "Item", subCategory: "Tech (Mobiles, Tablets, Laptops)"
-   - "Plot", "File", "Commercial Land", "DHA Phase 6 plot" -> mainCategory: "Property", subCategory: "Land & Plots"
-   - "AC Repair", "Wiring", "Electrician" -> mainCategory: "Service", subCategory: "Home Services (Plumber, Electrician, HVAC)"
-
-2. **Multi-Turn Priority**: Prioritize the LATEST message. If the user previously searched for Vehicles but now says "Show me houses," discard the Vehicle filters and switch to Property.
-3. **Sticky Context**: Keep the City, Country, or Budget from earlier in this specific chat history unless the user explicitly changes them.
-
-**DATA STANDARDIZATION:**
-- Fix typos: "Colorla" -> "Corolla", "Civicc" -> "Civic", "Mehraan" -> "Mehran".
-- Locations: Map "LHR" -> "Lahore", "KHI" -> "Karachi", "ISB" -> "Islamabad", "Pindi" -> "Rawalpindi".
-
-**needsSearch RULES:**
-- Set to TRUE only for finding new items or changing search or if the user mentions ANY searchable item, category, or location.
-- Set to FALSE for greetings, general chitchat, or follow-up questions about already-displayed listings or non-search statements.
+RULES:
+1. VECTOR QUERY: Combine ALL extracted details (item, category, type, city, specs) into a descriptive 'searchQuery' of 2 to 3 sentences maximum.
+2. CATEGORIES: Map slang to EXACT valid categories you are provided with in the Valid Categories section:
+   - "Heavy Bike", "70cc", "Scooty", "Hayabusa", "Bike" -> mainCategory: "Vehicle", subCategory: "Motorcycles" and etc.
+   - "Flat", "Penthouse", "Studio", "1BHK" -> mainCategory: "Property", subCategory: "Apartments & Flats" and  if user says "Plot", "File", "Commercial Land", "DHA Phase 6 plot" -> mainCategory: "Property", subCategory: "Land & Plots" and etc
+   - "iPhone", "Macbook", "Tab", "Phone", "Laptop" -> mainCategory: "Item", subCategory: "Tech (Mobiles, Tablets, Laptops)" and etc.
+   - "AC Repair", "Wiring", "Electrician" -> mainCategory: "Service", subCategory: "Home Services (Plumber, Electrician, HVAC)" and et.
+3. CONTEXT: Keep old City/Country unless changed. If user switches topics entirely, drop old category filters.
+4. FIX TEXT(DATA STANDARDIZATION): Correct typos ("Mehraan"->Mehran, "Civicc" -> "Civic") and expand cities ("LHR"->Lahore, "KHI"->Karachi, "ISB"->Islamabad, "Pindi"->Rawalpindi).
+5. TRIGGER: needsSearch=true if asking for ANY searchable item/category/location (even partial). false for greetings/follow-ups and chit chat.
 
 Valid Categories: ${catsJSON}
 
@@ -452,7 +444,7 @@ Output ONLY JSON:
 
         if (queryAnalysis.needsSearch) {
             try {
-                // Embed the clean searchQuery (not the raw message)
+                // [AI CALL]: Uses embedding.js to generate vector for user search query
                 const queryVector = await generateEmbedding(queryAnalysis.searchQuery, 'query');
                 if (queryVector) {
                     matchedListingsDocs = await performSearch(queryVector, queryAnalysis.filters);

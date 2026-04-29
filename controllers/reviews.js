@@ -9,6 +9,7 @@ async function callLLMWithFallback(messages, max_tokens) {
     let lastErr;
     for (const model of LLM_MODELS) {
         try {
+            // [AI CALL]: Uses openai.js to generate/update review summary
             return await openai.chat.completions.create({ model, messages, max_tokens });
         } catch (err) {
             console.warn(`[ReviewSummary Fallback Warning] Model ${model} failed, trying next if available...`, err.message);

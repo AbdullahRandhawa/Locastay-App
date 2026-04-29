@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Review = require('./review');
 const Schema = mongoose.Schema;
-const { cloudinary } = require('../cloudConfig');
+const { cloudinary } = require('../config/cloudConfig');
 const CATEGORIES = require('../utils/categories');
 
 const allSubCats = Object.values(CATEGORIES).flat();

@@ -148,7 +148,7 @@ app.use('/profile', profileRouter);
 app.use('/admin', adminRouter);
 
 const multer = require('multer');
-const { storage, cloudinary } = require('./cloudConfig.js');
+const { storage, cloudinary } = require('./config/cloudConfig.js');
 const { profile } = require("console");
 const upload = multer({ storage });
 

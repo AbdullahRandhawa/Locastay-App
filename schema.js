@@ -14,6 +14,8 @@ module.exports.listingSchema = joi.object({
         city: joi.string().required(), // Renamed from location
         country: joi.string().required(),
         address: joi.string().required(), // New required field for Mapbox
+        lng: joi.number().optional().allow('', null),
+        lat: joi.number().optional().allow('', null),
 
         // Marketplace Categorization
         mainCategory: joi.string().required().valid(...Object.keys(CATEGORIES)),

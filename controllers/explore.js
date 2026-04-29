@@ -17,6 +17,7 @@ async function getCleanedDescription(rawText) {
     if (!rawText || rawText.trim() === '') return '';
     try {
         const prompt = `Extract only hard facts, specifications, colors, and condition details from this text. Remove all sales bias, adjectives, and fluff. Be extremely concise. Return only the extracted facts. Text: "${rawText}"`;
+        // [AI CALL]: Uses openai.js to clean/de-fluff the description
         const completion = await openai.chat.completions.create({
             model: AI_MODEL,
             messages: [{ role: 'user', content: prompt }]
@@ -71,7 +72,7 @@ function buildSearchContext(listing, cleanedDescriptionText) {
 
 // 1. INDEX ROUTE
 module.exports.index = async (req, res) => {
-    const allListings = await Listing.find({});
+    const allListings = await Listing.find({}).sort({ _id: -1 });
     res.render('explore/index.ejs', { allListings, CATEGORIES });
 };
 
@@ -93,7 +94,7 @@ module.exports.searchListings = async (req, res, next) => {
             { searchContext: { $regex: searchQuery } },
             { owner: { $in: ownerIds } }
         ]
-    });
+    }).sort({ _id: -1 });
 
     res.render('explore/search.ejs', { allListings, q });
 };
@@ -122,19 +123,22 @@ module.exports.createListing = async (req, res) => {
         delete req.body.listing.conditionGrade;
     }
 
-    // --- PARALLEL EXECUTION: Mapbox & LLM De-fluffing ---
-    const geocodePromise = geocodingClient.forwardGeocode({
-        query: `${req.body.listing.city}, ${req.body.listing.country}`,
-        limit: 1
-    }).send();
-
-    const cleanDescPromise = getCleanedDescription(req.body.listing.description);
-
-    // Wait for BOTH to finish concurrently
-    const [response, cleanedDescription] = await Promise.all([geocodePromise, cleanDescPromise]);
+    // --- CLEAN DESCRIPTION (AI) ---
+    const cleanedDescription = await getCleanedDescription(req.body.listing.description);
 
     const newListing = new Listing(req.body.listing);
     newListing.conditionGrade = newListing.mainCategory === 'Service' ? undefined : newListing.conditionGrade;
+
+    // Set Geometry from the coordinates provided by the frontend map
+    const providedLng = parseFloat(req.body.listing.lng);
+    const providedLat = parseFloat(req.body.listing.lat);
+
+    if (!isNaN(providedLng) && !isNaN(providedLat)) {
+        newListing.geometry = { type: "Point", coordinates: [providedLng, providedLat] };
+    } else {
+        // Ultimate fallback if client-side geocoding failed
+        newListing.geometry = { type: "Point", coordinates: [0, 0] };
+    }
 
     newListing.image = [];
     if (req.files && req.files.length > 0) {
@@ -148,11 +152,7 @@ module.exports.createListing = async (req, res) => {
 
     newListing.owner = req.user._id;
 
-    if (response.body.features.length > 0) {
-        newListing.geometry = response.body.features[0].geometry;
-    } else {
-        newListing.geometry = { type: "Point", coordinates: [0, 0] };
-    }
+
 
     // Build the string using ONLY values and the AI-cleaned description
     newListing.searchContext = buildSearchContext(newListing, cleanedDescription);
@@ -164,6 +164,7 @@ module.exports.createListing = async (req, res) => {
     console.log("===================================\n");
 
     try {
+        // [AI CALL]: Uses embedding.js to generate vector for new listing
         newListing.listingVector = await generateEmbedding(newListing.searchContext, 'passage');
         if (newListing.listingVector && newListing.listingVector.length > 0) {
             console.log(`✅ [SUCCESS] Generated Embedding Vector!`);
@@ -216,7 +217,7 @@ module.exports.showListing = async (req, res) => {
     // Fetch all reviewers' profiles
     const reviewerIds = idListing.reviews.map(r => r.author ? r.author._id : null).filter(id => id != null);
     const reviewerProfiles = await Profile.find({ user: { $in: reviewerIds } }).lean();
-    
+
     // Create a map of userId -> profileImg url
     const profileImgMap = {};
     reviewerProfiles.forEach(p => {
@@ -229,7 +230,7 @@ module.exports.showListing = async (req, res) => {
     res.render('explore/show.ejs', { idListing, hostProfile, profileImgMap });
 };
 
-// 6. RENDER EDIT FORM (With your 150px Thumbnail logic)
+// 6. RENDER EDIT FORM
 module.exports.renderEditForm = async (req, res) => {
     let { id } = req.params;
     const listing = await Listing.findById(id);
@@ -258,15 +259,8 @@ module.exports.editListing = async (req, res) => {
         delete req.body.listing.conditionGrade;
     }
 
-    // --- PARALLEL EXECUTION: Mapbox & LLM De-fluffing ---
-    const geocodePromise = geocodingClient.forwardGeocode({
-        query: `${req.body.listing.city}, ${req.body.listing.country}`,
-        limit: 1
-    }).send();
-
-    const cleanDescPromise = getCleanedDescription(req.body.listing.description);
-
-    const [response, cleanedDescription] = await Promise.all([geocodePromise, cleanDescPromise]);
+    // --- CLEAN DESCRIPTION (AI) ---
+    const cleanedDescription = await getCleanedDescription(req.body.listing.description);
 
     let listing = await Listing.findById(id);
 
@@ -277,8 +271,12 @@ module.exports.editListing = async (req, res) => {
         listing.conditionGrade = undefined;
     }
 
-    if (response.body.features.length > 0) {
-        listing.geometry = response.body.features[0].geometry;
+    // Set Geometry from the coordinates provided by the frontend map
+    const providedLng = parseFloat(req.body.listing.lng);
+    const providedLat = parseFloat(req.body.listing.lat);
+
+    if (!isNaN(providedLng) && !isNaN(providedLat)) {
+        listing.geometry = { type: "Point", coordinates: [providedLng, providedLat] };
     }
 
     // Handle new images being added
@@ -294,21 +292,18 @@ module.exports.editListing = async (req, res) => {
     // Rebuild context using new values and newly cleaned description
     listing.searchContext = buildSearchContext(listing, cleanedDescription);
 
-    console.log("\n====== [EDIT] LISTING DATA ======");
-    console.log("Original Description:", req.body.listing.description);
-    console.log("LLM Cleaned Description:", cleanedDescription);
-    console.log("Final Search Context:", listing.searchContext);
-    console.log("=================================\n");
+
 
     try {
+        // [AI CALL]: Uses embedding.js to re-generate vector for edited listing
         listing.listingVector = await generateEmbedding(listing.searchContext, 'passage');
         if (listing.listingVector && listing.listingVector.length > 0) {
-            console.log(`✅ [SUCCESS] Re-generated Embedding Vector!`);
+            console.log(` [SUCCESS] Re-generated Embedding Vector!`);
             console.log(`   -> Array Length: ${listing.listingVector.length} dimensions`);
             console.log(`   -> Sample Data: [${listing.listingVector[0].toFixed(4)}, ${listing.listingVector[1].toFixed(4)}, ${listing.listingVector[2].toFixed(4)} ...]\n`);
         }
     } catch (embErr) {
-        console.warn('❌ Embedding generation failed (listing still saved):', embErr.message);
+        console.warn(' Embedding generation failed (listing still saved):', embErr.message);
     }
 
     await listing.save();

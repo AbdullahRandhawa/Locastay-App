@@ -46,13 +46,17 @@
 
       // Construct the base URL provided by EJS, attaching the client-detected theme variable
       const themeParam = isDark ? 'dark' : 'light';
-      const baseUrl = "<%= process.env.NODE_ENV === 'production' ? 'https://nocapchat.onrender.com' : 'http://localhost:5173' %>";
+      // Use the environment variable if present, otherwise fallback to local/prod defaults
+      const devUrl = "http://localhost:5173";
+      const prodUrl = "https://nocapchat.onrender.com";
+      const baseUrl = "<%= process.env.NODE_ENV %>" === "production" ? prodUrl : devUrl;
+      
       const fbToken = "<%= fbToken %>";
       const receiverId = "<%= receiverId || '' %>";
       
-      let finalUrl = baseUrl + "/?fbToken=" + fbToken + "&theme=" + themeParam;
+      let finalUrl = `${baseUrl}/?fbToken=${fbToken}&theme=${themeParam}`;
       if (receiverId) {
-          finalUrl += "&receiverId=" + receiverId;
+          finalUrl += `&receiverId=${receiverId}`;
       }
       
       iframe.src = finalUrl;

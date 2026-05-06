@@ -1,3 +1,11 @@
+/* 
+   ══════════════════════════════════════════════════════════════════════════════
+   DATABASE SCHEMA: CORE LISTING
+   ══════════════════════════════════════════════════════════════════════════════
+   This file defines the 'Core Listing' entity from the ER diagram.
+   Key attributes: title, price, category, geometry (GeoJSON), specifications,
+   and searchContext for AI-driven vector search.
+*/
 const mongoose = require('mongoose');
 const Review = require('./review');
 const Schema = mongoose.Schema;

@@ -13,6 +13,7 @@ const openai = require('../utils/openai');
 const rawModels = process.env.OPENROUTER_FALLBACK_MODELS || "deepseek/deepseek-v4-flash";
 const AI_MODEL = rawModels.split(',')[0].trim();
 
+// Uses AI to extract hard facts from raw listing descriptions.
 async function getCleanedDescription(rawText) {
     if (!rawText || rawText.trim() === '') return '';
     try {
@@ -29,7 +30,7 @@ async function getCleanedDescription(rawText) {
     }
 }
 
-// Helper: Build a pure value-only search context string for LLM + vector embeddings
+// Concatenates all relevant listing attributes into a single string for AI processing.
 function buildSearchContext(listing, cleanedDescriptionText) {
     const parts = [];
 
@@ -107,16 +108,7 @@ module.exports.renderNewForm = (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-// 4. CREATE LISTING (The Heavy Lifter)
+// Processes incoming form data, handles image uploads, and initializes the listing in DB.
 module.exports.createListing = async (req, res) => {
 
     if (req.body.listing.mainCategory === 'Service') {
@@ -157,14 +149,10 @@ module.exports.createListing = async (req, res) => {
     // Build the string using ONLY values and the AI-cleaned description
     newListing.searchContext = buildSearchContext(newListing, cleanedDescription);
 
-    console.log("\n====== [CREATE] LISTING DATA ======");
-    console.log("Original Description:", req.body.listing.description);
-    console.log("LLM Cleaned Description:", cleanedDescription);
-    console.log("Final Search Context:", newListing.searchContext);
-    console.log("===================================\n");
+    
 
     try {
-        // [AI CALL]: Uses embedding.js to generate vector for new listing
+        // Calls the embedding model to convert the searchContext string into a numeric vector.
         newListing.listingVector = await generateEmbedding(newListing.searchContext, 'passage');
         if (newListing.listingVector && newListing.listingVector.length > 0) {
             console.log(`✅ [SUCCESS] Generated Embedding Vector!`);
@@ -179,19 +167,6 @@ module.exports.createListing = async (req, res) => {
     req.flash("success", "New listing created successfully!");
     res.redirect(`/explore/${newly._id}`);
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -251,7 +226,7 @@ module.exports.renderEditForm = async (req, res) => {
     res.render('explore/edit.ejs', { listing, duplicates, CATEGORIES });
 };
 
-// 7. EDIT LISTING
+// 7. Updates an existing listing, handles new image additions, and re-generates AI context.
 module.exports.editListing = async (req, res) => {
     const { id } = req.params;
 
@@ -311,7 +286,7 @@ module.exports.editListing = async (req, res) => {
     res.redirect(`/explore/${id}`);
 };
 
-// 8. DELETE LISTING
+// 8. Removes the listing document and associated cleanup.
 module.exports.deleteListing = async (req, res) => {
     let { id } = req.params;
     await Listing.findByIdAndDelete(id);

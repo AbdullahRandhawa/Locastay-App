@@ -1,3 +1,11 @@
+/* 
+   ══════════════════════════════════════════════════════════════════════════════
+   DATABASE SCHEMA: USER PROFILE
+   ══════════════════════════════════════════════════════════════════════════════
+   This file defines the 'User Profile' entity from the ER diagram.
+   Stores extended user information like fullName, bio, and agentContext
+   used for personalization in AI conversations.
+*/
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 

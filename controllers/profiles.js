@@ -16,7 +16,7 @@ module.exports.profile = async (req, res, next) => {
 module.exports.publicProfile = async (req, res, next) => {
     const targetUserId = req.params.id;
     const profile = await Profile.findOne({ user: targetUserId });
-    
+
     if (!profile) {
         req.flash('error', 'Profile not found.');
         return res.redirect('/explore');
@@ -32,6 +32,7 @@ module.exports.renderProfileEditForm = async (req, res, next) => {
     res.render('users/editProfile.ejs', { profile });
 }
 
+// Updates the UserProfile document in MongoDB with new bio, name, or phone details.
 module.exports.editProfile = async (req, res, next) => {
     // If admin is saving edits for someone else, they'll pass targetUserId in body
     const targetUserId = (req.user.role === 'admin' && req.body.targetUserId) ? req.body.targetUserId : req.user._id;
@@ -44,14 +45,14 @@ module.exports.editProfile = async (req, res, next) => {
                 req.flash('error', 'Username must contain only lowercase letters, numbers, and underscores.');
                 return res.redirect('back');
             }
-            
+
             // Check uniqueness (exclude the actual user being edited)
             const existingUser = await User.findOne({ username: newUsername, _id: { $ne: targetUserId } });
             if (existingUser) {
                 req.flash('error', 'Username is already taken by another user.');
                 return res.redirect('back');
             }
-            
+
             // Reassign the clean string back into the payload, and update User Model
             req.body.profile.username = newUsername;
             await User.findByIdAndUpdate(targetUserId, { username: newUsername });
@@ -77,8 +78,9 @@ module.exports.editProfile = async (req, res, next) => {
         // Firebase Sync logic
         const targetUser = await User.findById(targetUserId);
         const firebaseUid = targetUser ? targetUser.firebaseUid : null;
-        
+
         if (firebaseUid) {
+            // Synchronizes the local Profile changes to the external Firestore 'users' collection 
             const userRef = db.collection("users").doc(firebaseUid);
             await userRef.set({
                 avatar: (updatedProfile.profileImg && updatedProfile.profileImg.url) ? updatedProfile.profileImg.url : "",
@@ -86,12 +88,12 @@ module.exports.editProfile = async (req, res, next) => {
                 fullName: updatedProfile.fullName || "",
                 bio: updatedProfile.bio || ""
             }, { merge: true });
-            
+
             console.log("Firebase Profile Synced successfully!");
         }
 
         req.flash('success', 'Profile updated successfully!');
-        if(req.user.role === 'admin' && req.body.targetUserId) {
+        if (req.user.role === 'admin' && req.body.targetUserId) {
             res.redirect(`/profile/public/${targetUserId}`);
         } else {
             res.redirect('/profile');
@@ -144,7 +146,7 @@ module.exports.deleteAccount = async (req, res, next) => {
 
             // Delete current user's entry in users collection
             await db.collection("users").doc(firebaseUid).delete().catch(e => console.error("User doc delete err:", e));
-            
+
             // Delete from Firebase Authentication
             await admin.auth().deleteUser(firebaseUid).catch(e => console.error("Auth delete err:", e));
         }

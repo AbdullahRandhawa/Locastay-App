@@ -1,3 +1,11 @@
+/* 
+   ══════════════════════════════════════════════════════════════════════════════
+   DATABASE SCHEMA: REVIEWS
+   ══════════════════════════════════════════════════════════════════════════════
+   This file defines the 'Reviews' entity from the ER diagram.
+   Handles the 1:N relationship between Listings and Reviews,
+   storing ratings and comments.
+*/
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 

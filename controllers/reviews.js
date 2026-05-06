@@ -104,6 +104,7 @@ Your task — follow these rules strictly:
 
 
 // CREATE REVIEW
+// Creates a new review document, assigning the rating and comment content.
 module.exports.createReview = async (req, res, next) => {
     // --- Server-side validation ---
     const { rating, comment } = req.body.review || {};
@@ -144,7 +145,7 @@ module.exports.createReview = async (req, res, next) => {
 }
 
 
-// DELETE REVIEW
+// Removes the review from both the listing's review array and the reviews collection.
 module.exports.deleteReview = async (req, res, next) => {
     let { id, reviewId } = req.params;
     await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });

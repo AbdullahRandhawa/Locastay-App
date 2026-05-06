@@ -1,3 +1,12 @@
+/* 
+   ══════════════════════════════════════════════════════════════════════════════
+   ENTITY MANAGEMENT: FIRESTORE (Firebase User, Chats, User chats)
+   ══════════════════════════════════════════════════════════════════════════════
+   CRITICAL: This controller is responsible for initializing the Firestore 
+   'users' and 'userchats' documents during signup. This ensures that the 
+   separate Chat application has the necessary data entities ready to use.
+   The Rentlyst app acts as the primary creator of these Firestore records.
+*/
 const User = require('../models/user');
 const Listing = require('../models/listing');
 const Profile = require('../models/profile');

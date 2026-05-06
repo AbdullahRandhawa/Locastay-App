@@ -20,9 +20,8 @@ const MESSAGE_COOLDOWN_MS = 2000;
 const summarizeCooldown = new Map(); // userId -> last run timestamp (ms)
 const SUMMARIZE_COOLDOWN_MS = 30 * 1000; // 30 seconds
 
-/**
- * Summarize unsummarized messages and perform a "Smart Merge" into the Manager's Dossier.
- */
+
+// Analyzes recent chat messages to update the UserProfile dossier/context.
 async function summarizeUnsummarizedChats(userId) {
     const userKey = userId.toString();
     const now = Date.now();
@@ -116,6 +115,7 @@ STRICT INSTRUCTIONS:
  * Build a sliding window of chat history for OpenAI messages format.
  * Takes the last few messages and merges consecutive identical roles to prevent API errors.
  */
+// Extracts the last N messages to provide immediate context for the AI model.
 function buildSlidingHistory(messages) {
     if (!messages || messages.length === 0) return [];
 
@@ -176,7 +176,7 @@ async function performSearch(queryVector, filters = {}) {
                     index: 'listing_vector_index',
                     path: 'listingVector',
                     queryVector,
-                    numCandidates: 200,
+                    numCandidates: 250,
                     limit: 10,
                     ...(filter ? { filter } : {})
                 }
@@ -327,7 +327,9 @@ module.exports.renderAgent = async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 };
-// 2. HANDLE MESSAGE (Streaming SSE)
+// 2. MAIN AGENT HANDLER
+// [METHOD: sendMessage]
+// The primary entry point (handleMessage) for user messages. Handles routing, search, and AI response.
 module.exports.handleMessage = async (req, res) => {
     try {
         const { message, conversationId } = req.body;
@@ -672,6 +674,8 @@ module.exports.getConversation = async (req, res) => {
 };
 
 // 5. DELETE CONVERSATION
+// [METHOD: deleteConversation]
+// Deletes the specific AI conversation from the database.
 module.exports.deleteConversation = async (req, res) => {
     await Conversation.findOneAndDelete({ _id: req.params.id, user: req.user._id });
     res.json({ success: true });

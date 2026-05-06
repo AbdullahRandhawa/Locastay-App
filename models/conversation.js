@@ -1,3 +1,11 @@
+/* 
+   ══════════════════════════════════════════════════════════════════════════════
+   DATABASE SCHEMA: AI CONVERSATION
+   ══════════════════════════════════════════════════════════════════════════════
+   This file defines the 'AI Conversation' entity from the ER diagram.
+   Manages the state and history of messages between users and the Rentlyst 
+   AI Agent, including summarization indices.
+*/
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 

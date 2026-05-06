@@ -1,3 +1,11 @@
+/* 
+   ══════════════════════════════════════════════════════════════════════════════
+   DATABASE SCHEMA: RENTLYST USER
+   ══════════════════════════════════════════════════════════════════════════════
+   This file defines the 'Rentlyst User' entity from the ER diagram.
+   Serves as the central link between local MongoDB records and 
+   external Firebase Authentication (via firebaseUid).
+*/
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
